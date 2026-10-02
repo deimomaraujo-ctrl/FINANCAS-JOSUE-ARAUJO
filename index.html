@@ -2,8 +2,22 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Finanças Josué Araújo</title>
+    
+    <!-- Meta Tags para PWA e Aplicativo Móvel -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Finanças Josué">
+    <meta name="application-name" content="Finanças Josué">
+    <meta name="description" content="Controle Financeiro Executivo - Josué Araújo">
+
+    <!-- Ícone PWA e Apple Touch Icon (SVG Embutido) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981' style='background:%230f172a;'><path d='M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981' style='background:%230f172a;padding:30px;'><path d='M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -24,31 +38,42 @@
         }
     </script>
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        body { 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+            font-family: system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="min-h-screen pb-12">
+<body class="min-h-screen pb-12 select-none">
     <!-- Header -->
-    <header class="bg-cardBg border-b border-borderCol sticky top-0 z-40 px-4 py-3 shadow-md">
+    <header class="bg-cardBg border-b border-borderCol sticky top-0 z-40 px-4 py-3 shadow-md pt-safe">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-accentGreen/20 flex items-center justify-center text-accentGreen text-xl">
+                <div class="w-10 h-10 rounded-xl bg-accentGreen/20 flex items-center justify-center text-accentGreen text-xl shadow-inner">
                     <i class="fa-solid fa-wallet"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base leading-tight">Finanças Josué Araújo</h1>
-                    <p class="text-xs text-slate-400">Controle Financeiro Executivo</p>
+                    <h1 class="font-bold text-base leading-tight">Finanças Josué</h1>
+                    <p class="text-[10px] text-slate-400">Controle Executivo</p>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
+                <!-- Botão de Instalar PWA (Exibido dinamicamente) -->
+                <button id="btnInstalarApp" onclick="solicitarInstalacaoPWA()" title="Instalar Aplicativo" class="hidden bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 p-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+                    <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+                    <span class="hidden sm:inline">Instalar</span>
+                </button>
                 <button onclick="abrirBackupModal()" title="Backup de Dados" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg text-xs transition">
                     <i class="fa-solid fa-database"></i>
                 </button>
                 <button onclick="abrirModalTransacao()" class="bg-accentGreen hover:bg-emerald-600 text-slate-950 font-semibold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1.5 transition">
                     <i class="fa-solid fa-plus"></i>
-                    <span>Nova Transação</span>
+                    <span>Nova</span>
                 </button>
             </div>
         </div>
@@ -56,15 +81,15 @@
 
     <main class="max-w-md mx-auto px-4 mt-4 space-y-4">
         <!-- Seletor de Mês -->
-        <div class="bg-cardBg border border-borderCol rounded-2xl p-3 flex items-center justify-between">
-            <button onclick="mudarMes(-1)" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition">
+        <div class="bg-cardBg border border-borderCol rounded-2xl p-3 flex items-center justify-between shadow-sm">
+            <button onclick="mudarMes(-1)" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition active:scale-95">
                 <i class="fa-solid fa-chevron-left text-xs"></i>
             </button>
             <div class="text-center">
                 <span id="displayMesAno" class="font-bold text-sm text-emerald-400 uppercase tracking-wide">Setembro / 2026</span>
                 <p class="text-[10px] text-slate-400">Mês Ativo & Sincronizado</p>
             </div>
-            <button onclick="mudarMes(1)" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition">
+            <button onclick="mudarMes(1)" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition active:scale-95">
                 <i class="fa-solid fa-chevron-right text-xs"></i>
             </button>
         </div>
@@ -73,7 +98,7 @@
         <div class="bg-slate-800/80 border border-borderCol rounded-xl px-3 py-2 flex items-center justify-between text-xs">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-calendar-check text-emerald-400"></i>
-                <span class="text-slate-300">Fechamento da Fatura:</span>
+                <span class="text-slate-300">Fechamento Fatura:</span>
                 <span id="labelFechamentoCartao" class="font-bold text-emerald-400">Dia 25</span>
             </div>
             <button onclick="editarFechamentoCartao()" class="text-indigo-400 hover:underline font-medium text-[11px]">
@@ -159,7 +184,7 @@
                     <i class="fa-solid fa-bag-shopping text-xs"></i><span>Cartão À Vista</span>
                 </button>
                 <button onclick="mudarAba('fatura')" id="tabBtn-fatura" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-receipt text-xs"></i><span>Pagamento de Fatura</span>
+                    <i class="fa-solid fa-receipt text-xs"></i><span>Pagamento Fatura</span>
                 </button>
             </div>
         </div>
@@ -184,6 +209,74 @@
     </div>
 
     <script>
+        // CONFIGURAÇÃO AUTOMÁTICA DE PWA (MANIFEST & SERVICE WORKER)
+        (function inicializarPWA() {
+            // 1. Gera e Injeta o Web App Manifest dinamicamente
+            const svgIcon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="%2310b981" style="background:%230f172a;padding:50px;"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>`;
+            
+            const manifestObj = {
+                name: "Finanças Josué Araújo",
+                short_name: "Finanças",
+                description: "Controle Financeiro Executivo Pessoal",
+                start_url: "./",
+                display: "standalone",
+                background_color: "#0f172a",
+                theme_color: "#0f172a",
+                orientation: "portrait",
+                icons: [
+                    { src: svgIcon, sizes: "192x192 512x512", type: "image/svg+xml", purpose: "any maskable" }
+                ]
+            };
+
+            const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            const linkTag = document.createElement('link');
+            linkTag.rel = 'manifest';
+            linkTag.href = manifestURL;
+            document.head.appendChild(linkTag);
+
+            // 2. Registra o Service Worker (Habilita modo offline e suporte PWA)
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    const CACHE_NAME = 'financas-josue-pwa-v1';
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => self.clients.claim());
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(
+                            fetch(e.request).catch(() => caches.match(e.request))
+                        );
+                    });
+                `;
+                const swBlob = new Blob([swCode], { type: 'application/javascript' });
+                const swURL = URL.createObjectURL(swBlob);
+                navigator.serviceWorker.register(swURL).catch(err => console.log('SW PWA:', err));
+            }
+        })();
+
+        // Manipulação do Prompt de Instalação do PWA
+        let eventoInstalacaoPWA = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            eventoInstalacaoPWA = e;
+            const btn = document.getElementById('btnInstalarApp');
+            if (btn) btn.classList.remove('hidden');
+        });
+
+        function solicitarInstalacaoPWA() {
+            if (eventoInstalacaoPWA) {
+                eventoInstalacaoPWA.prompt();
+                eventoInstalacaoPWA.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('btnInstalarApp').classList.add('hidden');
+                    }
+                    eventoInstalacaoPWA = null;
+                });
+            } else {
+                // Caso seja iOS ou não disparado pelo Chrome automaticamente
+                alert("Para instalar no iPhone/iOS:\n1. Toque no botão 'Compartilhar' do Safari.\n2. Escolha 'Adicionar à Tela de Início'.");
+            }
+        }
+
         // Estado Global da Aplicação
         let estadoApp = {
             mesAtual: '2026-09',
@@ -272,14 +365,11 @@
             return dataISO;
         }
 
-        // Funções de Cálculo de Mês de Fatura com base no Fechamento
         function calcularMesFatura(dataCompraStr, diaFechamento) {
-            // dataCompraStr esperado: 'YYYY-MM-DD'
             const [ano, mes, dia] = dataCompraStr.split('-').map(Number);
             let anoFatura = ano;
             let mesFatura = mes;
 
-            // Se o dia da compra for estritamente MAIOR que o dia de fechamento, vai para o mês seguinte
             if (dia > diaFechamento) {
                 mesFatura += 1;
                 if (mesFatura > 12) {
@@ -516,7 +606,6 @@
             }
         }
 
-        // Alterar Fechamento do Cartão
         function editarFechamentoCartao() {
             document.getElementById('modalTitulo').innerText = "Dia de Fechamento do Cartão";
             document.getElementById('modalFormCorpo').innerHTML = `
@@ -542,7 +631,6 @@
             atualizarInterface();
         }
 
-        // Modais de Formulários
         function editarRenda() {
             document.getElementById('modalTitulo').innerText = "Editar Renda Mensal";
             document.getElementById('modalFormCorpo').innerHTML = `
@@ -602,8 +690,6 @@
         function adicionarItem(tipo) {
             document.getElementById('modalTitulo').innerText = `Adicionar - ${tipo.toUpperCase()}`;
             let html = '';
-            
-            // Data atual em formato YYYY-MM-DD para o input Date
             const hoje = new Date().toISOString().split('T')[0];
 
             if(tipo === 'fixas' || tipo === 'variadas') {
@@ -647,11 +733,10 @@
 
             } else if(tipo === 'avista') {
                 const estab = document.getElementById('addEstab').value.trim();
-                const dataCompra = document.getElementById('addCompra').value; // 'YYYY-MM-DD'
+                const dataCompra = document.getElementById('addCompra').value;
                 const val = parseFloat(document.getElementById('addVal').value) || 0;
                 if(!estab || !dataCompra) { alert("Informe o estabelecimento e a data!"); return; }
 
-                // Calcula em qual mês da fatura este lançamento vai parar
                 const mesDestino = calcularMesFatura(dataCompra, estadoApp.diaFechamentoCartao);
                 garantirEstruturaMes(mesDestino);
 
@@ -667,16 +752,14 @@
 
             } else if(tipo === 'parcelado') {
                 const estab = document.getElementById('addEstab').value.trim();
-                const dataCompra = document.getElementById('addCompra').value; // 'YYYY-MM-DD'
+                const dataCompra = document.getElementById('addCompra').value;
                 const numParcelas = parseInt(document.getElementById('addNumParcelas').value) || 1;
                 const valParcela = parseFloat(document.getElementById('addVal').value) || 0;
 
                 if(!estab || !dataCompra) { alert("Informe o estabelecimento e a data!"); return; }
 
-                // Calcula o primeiro mês da fatura
                 const mesBaseFatura = calcularMesFatura(dataCompra, estadoApp.diaFechamentoCartao);
 
-                // Lança cada parcela nos meses subsequentes
                 for(let i = 0; i < numParcelas; i++) {
                     const mesDestino = somarMesesKey(mesBaseFatura, i);
                     garantirEstruturaMes(mesDestino);
