@@ -14,7 +14,7 @@
     <meta name="application-name" content="Finanças Josué">
     <meta name="description" content="Controle Financeiro Executivo - Josué Araújo">
 
-    <!-- Ícone PWA e Apple Touch Icon (SVG Embutido) -->
+    <!-- Ícone PWA e Apple Touch Icon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981' style='background:%230f172a;'><path d='M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981' style='background:%230f172a;padding:30px;'><path d='M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>">
 
@@ -63,7 +63,6 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <!-- Botão de Instalar PWA (Exibido dinamicamente) -->
                 <button id="btnInstalarApp" onclick="solicitarInstalacaoPWA()" title="Instalar Aplicativo" class="hidden bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 p-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
                     <i class="fa-solid fa-mobile-screen-button text-sm"></i>
                     <span class="hidden sm:inline">Instalar</span>
@@ -74,6 +73,7 @@
                 <button onclick="abrirModalTransacao()" class="bg-accentGreen hover:bg-emerald-600 text-slate-950 font-semibold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1.5 transition">
                     <i class="fa-solid fa-plus"></i>
                     <span>Nova</span>
+                    <i class="fa-solid fa-caret-down text-[10px] opacity-70"></i>
                 </button>
             </div>
         </div>
@@ -116,10 +116,10 @@
                 </div>
             </div>
             <div id="valorRenda" class="text-2xl font-black text-accentGreen tracking-tight">R$ 0,00</div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Salário + Extras</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Salário + Extras (Deste Mês)</p>
             <button onclick="editarRenda()" class="mt-3 text-xs text-emerald-400 hover:underline flex items-center space-x-1 font-medium">
                 <i class="fa-regular fa-pen-to-square"></i>
-                <span>Editar Renda</span>
+                <span>Editar Renda do Mês</span>
             </button>
         </div>
 
@@ -209,9 +209,8 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO AUTOMÁTICA DE PWA (MANIFEST & SERVICE WORKER)
+        // CONFIGURAÇÃO AUTOMÁTICA DE PWA
         (function inicializarPWA() {
-            // 1. Gera e Injeta o Web App Manifest dinamicamente
             const svgIcon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="%2310b981" style="background:%230f172a;padding:50px;"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>`;
             
             const manifestObj = {
@@ -235,10 +234,9 @@
             linkTag.href = manifestURL;
             document.head.appendChild(linkTag);
 
-            // 2. Registra o Service Worker (Habilita modo offline e suporte PWA)
             if ('serviceWorker' in navigator) {
                 const swCode = `
-                    const CACHE_NAME = 'financas-josue-pwa-v1';
+                    const CACHE_NAME = 'financas-josue-pwa-v3';
                     self.addEventListener('install', (e) => self.skipWaiting());
                     self.addEventListener('activate', (e) => self.clients.claim());
                     self.addEventListener('fetch', (e) => {
@@ -253,7 +251,6 @@
             }
         })();
 
-        // Manipulação do Prompt de Instalação do PWA
         let eventoInstalacaoPWA = null;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -272,7 +269,6 @@
                     eventoInstalacaoPWA = null;
                 });
             } else {
-                // Caso seja iOS ou não disparado pelo Chrome automaticamente
                 alert("Para instalar no iPhone/iOS:\n1. Toque no botão 'Compartilhar' do Safari.\n2. Escolha 'Adicionar à Tela de Início'.");
             }
         }
@@ -280,7 +276,7 @@
         // Estado Global da Aplicação
         let estadoApp = {
             mesAtual: '2026-09',
-            renda: 4833.63,
+            rendaPadrao: 4833.63,
             contaBancaria: 2057.58,
             diaFechamentoCartao: 25,
             abaAtiva: 'fixas',
@@ -293,15 +289,18 @@
                 try { estadoApp = JSON.parse(salvo); } catch(e) {}
             }
             if(!estadoApp.diaFechamentoCartao) estadoApp.diaFechamentoCartao = 25;
+            if(!estadoApp.rendaPadrao) estadoApp.rendaPadrao = 4833.63;
 
+            // Dados iniciais de exemplo para Setembro/2026
             if (!estadoApp.dadosMes['2026-09']) {
                 estadoApp.dadosMes['2026-09'] = {
+                    renda: 4833.63,
                     fixas: [
-                        { id: 1, descricao: 'ABANET', vencimento: '05/09/2026', valor: 108.08 },
-                        { id: 2, descricao: 'ENERGINSA - CASA ATUAL', vencimento: '05/09/2026', valor: 123.33 },
-                        { id: 3, descricao: 'BRK - CASA ATUAL', vencimento: '10/09/2026', valor: 107.45 },
-                        { id: 4, descricao: 'PLANO GLIMA', vencimento: '05/09/2026', valor: 317.88 },
-                        { id: 5, descricao: 'CARTÃO SAN MARINO', vencimento: '05/09/2026', valor: 58.15 }
+                        { id: 1, descricao: 'ABANET', vencimento: '05/09/2026', valor: 108.08, pago: true },
+                        { id: 2, descricao: 'ENERGINSA - CASA ATUAL', vencimento: '05/09/2026', valor: 123.33, pago: true },
+                        { id: 3, descricao: 'BRK - CASA ATUAL', vencimento: '10/09/2026', valor: 107.45, pago: false },
+                        { id: 4, descricao: 'PLANO GLIMA', vencimento: '05/09/2026', valor: 317.88, pago: true },
+                        { id: 5, descricao: 'CARTÃO SAN MARINO', vencimento: '05/09/2026', valor: 58.15, pago: false }
                     ],
                     variadas: [],
                     parcelado: [
@@ -319,6 +318,7 @@
                         { id: 5, estabelecimento: 'ART*SOFTWARE', data: '2026-08-20', vencimento: '28/09/2026', valor: 10.20 },
                         { id: 6, estabelecimento: 'RIBEIROSABOR', data: '2026-08-25', vencimento: '28/09/2026', valor: 15.00 }
                     ],
+                    gastosConta: [],
                     pagamentoFatura: { valorPago: 2056.26, dataPagamento: '28/09/2026' }
                 };
             }
@@ -331,19 +331,37 @@
         function garantirEstruturaMes(mesKey) {
             if (!estadoApp.dadosMes[mesKey]) {
                 let fixasAnteriores = [];
+                let rendaAnterior = estadoApp.rendaPadrao;
+
                 const meses = Object.keys(estadoApp.dadosMes).sort();
                 if (meses.length > 0) {
                     const ultimoMes = meses[meses.length - 1];
-                    fixasAnteriores = estadoApp.dadosMes[ultimoMes].fixas.map(f => ({...f, id: Date.now() + Math.random()}));
+                    fixasAnteriores = estadoApp.dadosMes[ultimoMes].fixas.map(f => ({
+                        ...f, 
+                        id: Date.now() + Math.random(),
+                        pago: false 
+                    }));
+                    if(estadoApp.dadosMes[ultimoMes].renda) {
+                        rendaAnterior = estadoApp.dadosMes[ultimoMes].renda;
+                    }
                 }
 
                 estadoApp.dadosMes[mesKey] = {
+                    renda: rendaAnterior,
                     fixas: fixasAnteriores,
                     variadas: [],
                     parcelado: [],
                     avista: [],
+                    gastosConta: [],
                     pagamentoFatura: { valorPago: 0, dataPagamento: '' }
                 };
+            } else {
+                if (estadoApp.dadosMes[mesKey].renda === undefined) {
+                    estadoApp.dadosMes[mesKey].renda = estadoApp.rendaPadrao;
+                }
+                if (!estadoApp.dadosMes[mesKey].gastosConta) {
+                    estadoApp.dadosMes[mesKey].gastosConta = [];
+                }
             }
         }
 
@@ -410,11 +428,12 @@
             document.getElementById('displayMesAno').innerText = `${mesesStr[Number(mes)-1]} / ${ano}`;
             document.getElementById('labelFechamentoCartao').innerText = `Dia ${estadoApp.diaFechamentoCartao}`;
 
-            document.getElementById('valorRenda').innerText = formatarMoeda(estadoApp.renda);
+            const dados = estadoApp.dadosMes[estadoApp.mesAtual];
+            const rendaDoMes = dados.renda !== undefined ? dados.renda : estadoApp.rendaPadrao;
+
+            document.getElementById('valorRenda').innerText = formatarMoeda(rendaDoMes);
             document.getElementById('valorContaBancaria').innerText = formatarMoeda(estadoApp.contaBancaria);
 
-            const dados = estadoApp.dadosMes[estadoApp.mesAtual];
-            
             let totalFixas = dados.fixas.reduce((acc, i) => acc + Number(i.valor || 0), 0);
             let totalVariadas = dados.variadas.reduce((acc, i) => acc + Number(i.valor || 0), 0);
             let totalParcelado = dados.parcelado.reduce((acc, i) => acc + Number(i.valorParcela || 0), 0);
@@ -422,7 +441,7 @@
             let totalFaturaCartao = totalParcelado + totalAvista;
             
             let totalGeralDividas = totalFixas + totalVariadas + totalFaturaCartao;
-            let previsaoSobra = estadoApp.renda - totalGeralDividas;
+            let previsaoSobra = rendaDoMes - totalGeralDividas;
 
             document.getElementById('valorTotalDividas').innerText = formatarMoeda(totalGeralDividas);
             
@@ -456,6 +475,18 @@
             renderizarAbaAtiva();
         }
 
+        function toggleStatusPago(tipo, id) {
+            const dados = estadoApp.dadosMes[estadoApp.mesAtual];
+            if (dados[tipo]) {
+                const item = dados[tipo].find(i => i.id === id);
+                if (item) {
+                    item.pago = !item.pago;
+                    salvarStorage();
+                    atualizarInterface();
+                }
+            }
+        }
+
         function renderizarAbaAtiva() {
             const container = document.getElementById('conteudoAbas');
             const dados = estadoApp.dadosMes[estadoApp.mesAtual];
@@ -472,14 +503,20 @@
                     html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma dívida fixa registrada neste mês.</p>`;
                 } else {
                     dados.fixas.forEach(item => {
+                        const estaPago = !!item.pago;
                         html += `
-                            <div class="flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition">
-                                <div>
-                                    <p class="text-xs font-bold text-slate-200">${item.descricao}</p>
-                                    <p class="text-[10px] text-slate-400">Venc: ${formatarDataBR(item.vencimento)}</p>
+                            <div class="flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border ${estaPago ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-slate-700/50'} hover:border-slate-600 transition">
+                                <div class="flex items-center space-x-3">
+                                    <button onclick="toggleStatusPago('fixas', ${item.id})" class="w-5 h-5 rounded-md border ${estaPago ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-600 bg-slate-900'} flex items-center justify-center transition">
+                                        ${estaPago ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''}
+                                    </button>
+                                    <div>
+                                        <p class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${item.descricao}</p>
+                                        <p class="text-[10px] text-slate-400">Venc: ${formatarDataBR(item.vencimento)} ${estaPago ? '• <span class="text-emerald-400 font-semibold">Pago</span>' : '• <span class="text-rose-400 font-semibold">Pendente</span>'}</p>
+                                    </div>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valor)}</span>
+                                    <span class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
                                     <button onclick="removerItem('fixas', ${item.id})" class="text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
@@ -500,14 +537,20 @@
                     html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma dívida variada registrada neste mês.</p>`;
                 } else {
                     dados.variadas.forEach(item => {
+                        const estaPago = !!item.pago;
                         html += `
-                            <div class="flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition">
-                                <div>
-                                    <p class="text-xs font-bold text-slate-200">${item.descricao}</p>
-                                    <p class="text-[10px] text-slate-400">Venc: ${formatarDataBR(item.vencimento)}</p>
+                            <div class="flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border ${estaPago ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-slate-700/50'} hover:border-slate-600 transition">
+                                <div class="flex items-center space-x-3">
+                                    <button onclick="toggleStatusPago('variadas', ${item.id})" class="w-5 h-5 rounded-md border ${estaPago ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-600 bg-slate-900'} flex items-center justify-center transition">
+                                        ${estaPago ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''}
+                                    </button>
+                                    <div>
+                                        <p class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${item.descricao}</p>
+                                        <p class="text-[10px] text-slate-400">Venc: ${formatarDataBR(item.vencimento)} ${estaPago ? '• <span class="text-emerald-400 font-semibold">Pago</span>' : '• <span class="text-rose-400 font-semibold">Pendente</span>'}</p>
+                                    </div>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valor)}</span>
+                                    <span class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
                                     <button onclick="removerItem('variadas', ${item.id})" class="text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
@@ -632,12 +675,15 @@
         }
 
         function editarRenda() {
-            document.getElementById('modalTitulo').innerText = "Editar Renda Mensal";
+            const rendaAtualMes = estadoApp.dadosMes[estadoApp.mesAtual].renda !== undefined ? estadoApp.dadosMes[estadoApp.mesAtual].renda : estadoApp.rendaPadrao;
+            
+            document.getElementById('modalTitulo').innerText = "Editar Renda deste Mês";
             document.getElementById('modalFormCorpo').innerHTML = `
                 <div>
-                    <label class="text-xs text-slate-400">Salário + Extras (R$)</label>
-                    <input type="number" step="0.01" id="valRendaInput" value="${estadoApp.renda}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
+                    <label class="text-xs text-slate-400">Salário + Extras do Mês (R$)</label>
+                    <input type="number" step="0.01" id="valRendaInput" value="${rendaAtualMes}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
                 </div>
+                <p class="text-[10px] text-emerald-400 mt-1">Esta alteração afetará apenas o mês ativo (${estadoApp.mesAtual}).</p>
                 <button onclick="confirmarEdicaoRenda()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2 rounded-xl text-xs mt-2 transition">Salvar Renda</button>
             `;
             document.getElementById('modalTransacao').classList.remove('hidden');
@@ -645,7 +691,7 @@
 
         function confirmarEdicaoRenda() {
             const val = parseFloat(document.getElementById('valRendaInput').value) || 0;
-            estadoApp.renda = val;
+            estadoApp.dadosMes[estadoApp.mesAtual].renda = val;
             salvarStorage();
             fecharModal();
             atualizarInterface();
@@ -671,24 +717,46 @@
             atualizarInterface();
         }
 
+        // Botão + Nova Transação (Menu com todas as 5 opções)
         function abrirModalTransacao() {
-            if(estadoApp.abaAtiva === 'fatura') {
-                document.getElementById('modalTitulo').innerText = "Escolha o Tipo de Cartão";
-                document.getElementById('modalFormCorpo').innerHTML = `
-                    <p class="text-xs text-slate-400 mb-2">Selecione o tipo de compra para adicionar à fatura:</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="adicionarItem('avista')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-medium text-center">Cartão À Vista</button>
-                        <button onclick="adicionarItem('parcelado')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-medium text-center">Cartão Parcelado</button>
-                    </div>
-                `;
-                document.getElementById('modalTransacao').classList.remove('hidden');
-            } else {
-                adicionarItem(estadoApp.abaAtiva);
-            }
+            document.getElementById('modalTitulo').innerText = "Selecione o Tipo de Dívida";
+            document.getElementById('modalFormCorpo').innerHTML = `
+                <p class="text-xs text-slate-400 mb-2">Qual tipo de lançamento deseja cadastrar?</p>
+                <div class="grid grid-cols-1 gap-2">
+                    <button onclick="adicionarItem('fixas')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition group">
+                        <span class="text-slate-200">📌 Dívida Recorrente / Fixa</span>
+                        <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-emerald-400 text-xs"></i>
+                    </button>
+                    <button onclick="adicionarItem('variadas')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition group">
+                        <span class="text-slate-200">🔀 Dívida Variada / Imprevisto</span>
+                        <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-emerald-400 text-xs"></i>
+                    </button>
+                    <button onclick="adicionarItem('avista')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition group">
+                        <span class="text-slate-200">🛍️ Cartão de Crédito À Vista</span>
+                        <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-emerald-400 text-xs"></i>
+                    </button>
+                    <button onclick="adicionarItem('parcelado')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition group">
+                        <span class="text-slate-200">💳 Cartão de Crédito Parcelado</span>
+                        <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-emerald-400 text-xs"></i>
+                    </button>
+                    <button onclick="adicionarItem('gastoConta')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition group border-indigo-500/30">
+                        <span class="text-indigo-300">🏦 Gasto na Conta Bancária (Débito/Pix)</span>
+                        <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-indigo-400 text-xs"></i>
+                    </button>
+                </div>
+            `;
+            document.getElementById('modalTransacao').classList.remove('hidden');
         }
 
         function adicionarItem(tipo) {
-            document.getElementById('modalTitulo').innerText = `Adicionar - ${tipo.toUpperCase()}`;
+            let titulo = 'Novo Lançamento';
+            if(tipo === 'fixas') titulo = 'Adicionar Dívida Fixa';
+            if(tipo === 'variadas') titulo = 'Adicionar Dívida Variada';
+            if(tipo === 'avista') titulo = 'Nova Compra no Cartão (À Vista)';
+            if(tipo === 'parcelado') titulo = 'Nova Compra no Cartão (Parcelado)';
+            if(tipo === 'gastoConta') titulo = 'Gasto na Conta Bancária';
+
+            document.getElementById('modalTitulo').innerText = titulo;
             let html = '';
             const hoje = new Date().toISOString().split('T')[0];
 
@@ -713,6 +781,13 @@
                     <div><label class="text-xs text-slate-400">Valor Total (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <p class="text-[10px] text-emerald-400">Fechamento considerado: Dia ${estadoApp.diaFechamentoCartao}</p>
                 `;
+            } else if(tipo === 'gastoConta') {
+                html = `
+                    <div><label class="text-xs text-slate-400">Descrição do Gasto</label><input type="text" id="addDesc" placeholder="Ex: Mercado, Lanche, Pix..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Data do Gasto</label><input type="date" id="addVenc" value="${hoje}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Valor do Gasto (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <p class="text-[10px] text-amber-400">⚠️ Este valor será descontado imediatamente da sua Conta Bancária (Saldo Atual).</p>
+                `;
             }
             html += `<button onclick="salvarNovoItem('${tipo}')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2 rounded-xl text-xs mt-2 transition">Salvar Item</button>`;
             document.getElementById('modalFormCorpo').innerHTML = html;
@@ -729,7 +804,7 @@
                 if(!desc) { alert("Informe uma descrição!"); return; }
 
                 const dados = estadoApp.dadosMes[estadoApp.mesAtual];
-                dados[tipo].push({ id: novoId, descricao: desc, vencimento: venc, valor: val });
+                dados[tipo].push({ id: novoId, descricao: desc, vencimento: venc, valor: val, pago: false });
 
             } else if(tipo === 'avista') {
                 const estab = document.getElementById('addEstab').value.trim();
@@ -773,6 +848,30 @@
                 }
 
                 alert(`${numParcelas} parcela(s) gerada(s) a partir da fatura inicial!`);
+
+            } else if(tipo === 'gastoConta') {
+                const desc = document.getElementById('addDesc').value.trim();
+                const dataGasto = document.getElementById('addVenc').value;
+                const val = parseFloat(document.getElementById('addVal').value) || 0;
+
+                if(!desc || val <= 0) { 
+                    alert("Informe uma descrição válida e um valor maior que zero!"); 
+                    return; 
+                }
+
+                // Subtrai diretamente da Conta Bancária
+                estadoApp.contaBancaria = estadoApp.contaBancaria - val;
+
+                const dados = estadoApp.dadosMes[estadoApp.mesAtual];
+                if (!dados.gastosConta) dados.gastosConta = [];
+                dados.gastosConta.push({
+                    id: novoId,
+                    descricao: desc,
+                    data: dataGasto,
+                    valor: val
+                });
+
+                alert(`Gasto registrado! ${formatarMoeda(val)} foi descontado da sua Conta Bancária.`);
             }
 
             salvarStorage();
