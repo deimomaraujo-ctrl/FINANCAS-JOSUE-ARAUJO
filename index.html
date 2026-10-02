@@ -69,6 +69,18 @@
             </button>
         </div>
 
+        <!-- BARRA CONFIGURAÇÃO RÁPIDA DE CARTÃO -->
+        <div class="bg-slate-800/80 border border-borderCol rounded-xl px-3 py-2 flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+                <span class="text-slate-300">Fechamento da Fatura:</span>
+                <span id="labelFechamentoCartao" class="font-bold text-emerald-400">Dia 25</span>
+            </div>
+            <button onclick="editarFechamentoCartao()" class="text-indigo-400 hover:underline font-medium text-[11px]">
+                Alterar Dia
+            </button>
+        </div>
+
         <!-- MENU PRINCIPAL -->
         <!-- 1. ENTRADAS (RENDA) -->
         <div class="bg-cardBg border border-borderCol rounded-2xl p-4 shadow-sm relative">
@@ -172,11 +184,12 @@
     </div>
 
     <script>
-        // Estado Global
+        // Estado Global da Aplicação
         let estadoApp = {
             mesAtual: '2026-09',
             renda: 4833.63,
             contaBancaria: 2057.58,
+            diaFechamentoCartao: 25,
             abaAtiva: 'fixas',
             dadosMes: {}
         };
@@ -186,6 +199,7 @@
             if (salvo) {
                 try { estadoApp = JSON.parse(salvo); } catch(e) {}
             }
+            if(!estadoApp.diaFechamentoCartao) estadoApp.diaFechamentoCartao = 25;
 
             if (!estadoApp.dadosMes['2026-09']) {
                 estadoApp.dadosMes['2026-09'] = {
@@ -198,19 +212,19 @@
                     ],
                     variadas: [],
                     parcelado: [
-                        { id: 1, estabelecimento: 'ODONTOPOS', compra: '15-ago', vencimento: '28/09/2026', valorParcela: 49.80 },
-                        { id: 2, estabelecimento: 'NOSSO LAR', compra: '16-ago', vencimento: '28/09/2026', valorParcela: 160.38 },
-                        { id: 3, estabelecimento: 'JB BIKE', compra: '19-ago', vencimento: '28/09/2026', valorParcela: 80.80 },
-                        { id: 4, estabelecimento: 'SUBEXERCICIO', compra: '20-ago', vencimento: '28/09/2026', valorParcela: 109.25 },
-                        { id: 5, estabelecimento: 'FAR-ESTÁDIO', compra: '24-ago', vencimento: '28/09/2026', valorParcela: 135.60 }
+                        { id: 1, estabelecimento: 'ODONTOPOS', compra: '2026-08-15', vencimento: '28/09/2026', valorParcela: 49.80 },
+                        { id: 2, estabelecimento: 'NOSSO LAR', compra: '2026-08-16', vencimento: '28/09/2026', valorParcela: 160.38 },
+                        { id: 3, estabelecimento: 'JB BIKE', compra: '2026-08-19', vencimento: '28/09/2026', valorParcela: 80.80 },
+                        { id: 4, estabelecimento: 'SUBEXERCICIO', compra: '2026-08-20', vencimento: '28/09/2026', valorParcela: 109.25 },
+                        { id: 5, estabelecimento: 'FAR-ESTÁDIO', compra: '2026-08-24', vencimento: '28/09/2026', valorParcela: 135.60 }
                     ],
                     avista: [
-                        { id: 1, estabelecimento: 'CARTÃO DE TODOS', data: '15-ago', vencimento: '28/09/2026', valor: 35.40 },
-                        { id: 2, estabelecimento: 'SUPERMERCADO CAMPEÃO', data: '18-ago', vencimento: '28/09/2026', valor: 168.33 },
-                        { id: 3, estabelecimento: 'SANALI PETRO', data: '19-ago', vencimento: '28/09/2026', valor: 85.80 },
-                        { id: 4, estabelecimento: 'M. D. S. L. LIMA', data: '20-ago', vencimento: '28/09/2026', valor: 85.00 },
-                        { id: 5, estabelecimento: 'ART*SOFTWARE', data: '20-ago', vencimento: '28/09/2026', valor: 10.20 },
-                        { id: 6, estabelecimento: 'RIBEIROSABOR', data: '25-ago', vencimento: '28/09/2026', valor: 15.00 }
+                        { id: 1, estabelecimento: 'CARTÃO DE TODOS', data: '2026-08-15', vencimento: '28/09/2026', valor: 35.40 },
+                        { id: 2, estabelecimento: 'SUPERMERCADO CAMPEÃO', data: '2026-08-18', vencimento: '28/09/2026', valor: 168.33 },
+                        { id: 3, estabelecimento: 'SANALI PETRO', data: '2026-08-19', vencimento: '28/09/2026', valor: 85.80 },
+                        { id: 4, estabelecimento: 'M. D. S. L. LIMA', data: '2026-08-20', vencimento: '28/09/2026', valor: 85.00 },
+                        { id: 5, estabelecimento: 'ART*SOFTWARE', data: '2026-08-20', vencimento: '28/09/2026', valor: 10.20 },
+                        { id: 6, estabelecimento: 'RIBEIROSABOR', data: '2026-08-25', vencimento: '28/09/2026', valor: 15.00 }
                     ],
                     pagamentoFatura: { valorPago: 2056.26, dataPagamento: '28/09/2026' }
                 };
@@ -248,6 +262,46 @@
             return 'R$ ' + Number(val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        function formatarDataBR(dataISO) {
+            if(!dataISO) return '';
+            if(dataISO.includes('/')) return dataISO;
+            const partes = dataISO.split('-');
+            if(partes.length === 3) {
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            }
+            return dataISO;
+        }
+
+        // Funções de Cálculo de Mês de Fatura com base no Fechamento
+        function calcularMesFatura(dataCompraStr, diaFechamento) {
+            // dataCompraStr esperado: 'YYYY-MM-DD'
+            const [ano, mes, dia] = dataCompraStr.split('-').map(Number);
+            let anoFatura = ano;
+            let mesFatura = mes;
+
+            // Se o dia da compra for estritamente MAIOR que o dia de fechamento, vai para o mês seguinte
+            if (dia > diaFechamento) {
+                mesFatura += 1;
+                if (mesFatura > 12) {
+                    mesFatura = 1;
+                    anoFatura += 1;
+                }
+            }
+
+            const mesStr = String(mesFatura).padStart(2, '0');
+            return `${anoFatura}-${mesStr}`;
+        }
+
+        function somarMesesKey(mesKey, quantidadeMeses) {
+            let [ano, mes] = mesKey.split('-').map(Number);
+            mes += quantidadeMeses;
+            while (mes > 12) {
+                mes -= 12;
+                ano += 1;
+            }
+            return `${ano}-${String(mes).padStart(2, '0')}`;
+        }
+
         function mudarMes(direcao) {
             const [ano, mes] = estadoApp.mesAtual.split('-').map(Number);
             let d = new Date(ano, mes - 1 + direcao, 1);
@@ -264,6 +318,7 @@
             const [ano, mes] = estadoApp.mesAtual.split('-');
             const mesesStr = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
             document.getElementById('displayMesAno').innerText = `${mesesStr[Number(mes)-1]} / ${ano}`;
+            document.getElementById('labelFechamentoCartao').innerText = `Dia ${estadoApp.diaFechamentoCartao}`;
 
             document.getElementById('valorRenda').innerText = formatarMoeda(estadoApp.renda);
             document.getElementById('valorContaBancaria').innerText = formatarMoeda(estadoApp.contaBancaria);
@@ -331,7 +386,7 @@
                             <div class="flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition">
                                 <div>
                                     <p class="text-xs font-bold text-slate-200">${item.descricao}</p>
-                                    <p class="text-[10px] text-slate-400">Venc: ${item.vencimento}</p>
+                                    <p class="text-[10px] text-slate-400">Venc: ${formatarDataBR(item.vencimento)}</p>
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valor)}</span>
@@ -359,7 +414,7 @@
                             <div class="flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition">
                                 <div>
                                     <p class="text-xs font-bold text-slate-200">${item.descricao}</p>
-                                    <p class="text-[10px] text-slate-400">Venc: ${item.vencimento}</p>
+                                    <p class="text-[10px] text-slate-400">Venc: ${formatarDataBR(item.vencimento)}</p>
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valor)}</span>
@@ -380,14 +435,14 @@
                     <div class="space-y-2">
                 `;
                 if(dados.parcelado.length === 0) {
-                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma compra parcelada neste mês.</p>`;
+                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma compra parcelada nesta fatura.</p>`;
                 } else {
                     dados.parcelado.forEach(item => {
                         html += `
                             <div class="flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition">
                                 <div>
                                     <p class="text-xs font-bold text-slate-200">${item.estabelecimento}</p>
-                                    <p class="text-[10px] text-slate-400">Compra: ${item.compra} | Venc: ${item.vencimento}</p>
+                                    <p class="text-[10px] text-slate-400">Data Compra: ${formatarDataBR(item.compra)}</p>
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valorParcela)}</span>
@@ -408,14 +463,14 @@
                     <div class="space-y-2">
                 `;
                 if(dados.avista.length === 0) {
-                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma compra à vista neste mês.</p>`;
+                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma compra à vista nesta fatura.</p>`;
                 } else {
                     dados.avista.forEach(item => {
                         html += `
                             <div class="flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 hover:border-slate-600 transition">
                                 <div>
                                     <p class="text-xs font-bold text-slate-200">${item.estabelecimento}</p>
-                                    <p class="text-[10px] text-slate-400">Data: ${item.data} | Venc: ${item.vencimento}</p>
+                                    <p class="text-[10px] text-slate-400">Data Compra: ${formatarDataBR(item.data)}</p>
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valor)}</span>
@@ -449,7 +504,7 @@
                         </div>
                         <div class="space-y-2">
                             <label class="text-xs text-slate-300 font-medium">Data em que a fatura foi paga:</label>
-                            <input type="text" id="inputDataPagoFatura" value="${dataPag}" placeholder="Ex: 28/09/2026" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <input type="date" id="inputDataPagoFatura" value="${dataPag}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                         </div>
                         <button onclick="salvarPagamentoFatura()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2 rounded-xl text-xs transition">Atualizar Pagamento da Fatura</button>
                         <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
@@ -461,7 +516,33 @@
             }
         }
 
-        // Funções de Modal e Ações
+        // Alterar Fechamento do Cartão
+        function editarFechamentoCartao() {
+            document.getElementById('modalTitulo').innerText = "Dia de Fechamento do Cartão";
+            document.getElementById('modalFormCorpo').innerHTML = `
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Dia do mês em que a fatura fecha (1 a 31):</label>
+                    <input type="number" min="1" max="31" id="inputDiaFechamento" value="${estadoApp.diaFechamentoCartao}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1">Exemplo: Se o fechamento for dia 25, compras do dia 26 em diante virão na próxima fatura.</p>
+                <button onclick="salvarFechamentoCartao()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2 rounded-xl text-xs mt-2 transition">Salvar Alteração</button>
+            `;
+            document.getElementById('modalTransacao').classList.remove('hidden');
+        }
+
+        function salvarFechamentoCartao() {
+            const val = parseInt(document.getElementById('inputDiaFechamento').value) || 25;
+            if (val < 1 || val > 31) {
+                alert("Por favor, digite um dia válido entre 1 e 31.");
+                return;
+            }
+            estadoApp.diaFechamentoCartao = val;
+            salvarStorage();
+            fecharModal();
+            atualizarInterface();
+        }
+
+        // Modais de Formulários
         function editarRenda() {
             document.getElementById('modalTitulo').innerText = "Editar Renda Mensal";
             document.getElementById('modalFormCorpo').innerHTML = `
@@ -521,25 +602,30 @@
         function adicionarItem(tipo) {
             document.getElementById('modalTitulo').innerText = `Adicionar - ${tipo.toUpperCase()}`;
             let html = '';
+            
+            // Data atual em formato YYYY-MM-DD para o input Date
+            const hoje = new Date().toISOString().split('T')[0];
+
             if(tipo === 'fixas' || tipo === 'variadas') {
                 html = `
                     <div><label class="text-xs text-slate-400">Descrição</label><input type="text" id="addDesc" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <div><label class="text-xs text-slate-400">Vencimento</label><input type="text" id="addVenc" placeholder="Ex: 05/09/2026" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Vencimento</label><input type="date" id="addVenc" value="${hoje}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Valor (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                 `;
             } else if(tipo === 'parcelado') {
                 html = `
                     <div><label class="text-xs text-slate-400">Estabelecimento</label><input type="text" id="addEstab" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <div><label class="text-xs text-slate-400">Data da Compra</label><input type="text" id="addCompra" placeholder="Ex: 15-ago" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <div><label class="text-xs text-slate-400">Vencimento Fatura</label><input type="text" id="addVenc" placeholder="Ex: 28/09/2026" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <div><label class="text-xs text-slate-400">Valor da Parcela (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Data da Compra</label><input type="date" id="addCompra" value="${hoje}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Nº de Parcelas</label><input type="number" min="1" max="72" id="addNumParcelas" value="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Valor de Cada Parcela (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <p class="text-[10px] text-emerald-400">Fechamento considerado: Dia ${estadoApp.diaFechamentoCartao}</p>
                 `;
             } else if(tipo === 'avista') {
                 html = `
                     <div><label class="text-xs text-slate-400">Estabelecimento</label><input type="text" id="addEstab" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <div><label class="text-xs text-slate-400">Data da Compra</label><input type="text" id="addCompra" placeholder="Ex: 15-ago" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <div><label class="text-xs text-slate-400">Vencimento Fatura</label><input type="text" id="addVenc" placeholder="Ex: 28/09/2026" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <div><label class="text-xs text-slate-400">Valor (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Data da Compra</label><input type="date" id="addCompra" value="${hoje}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Valor Total (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <p class="text-[10px] text-emerald-400">Fechamento considerado: Dia ${estadoApp.diaFechamentoCartao}</p>
                 `;
             }
             html += `<button onclick="salvarNovoItem('${tipo}')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2 rounded-xl text-xs mt-2 transition">Salvar Item</button>`;
@@ -548,29 +634,62 @@
         }
 
         function salvarNovoItem(tipo) {
-            const dados = estadoApp.dadosMes[estadoApp.mesAtual];
             const novoId = Date.now();
 
             if(tipo === 'fixas' || tipo === 'variadas') {
                 const desc = document.getElementById('addDesc').value.trim();
-                const venc = document.getElementById('addVenc').value.trim();
+                const venc = document.getElementById('addVenc').value;
                 const val = parseFloat(document.getElementById('addVal').value) || 0;
                 if(!desc) { alert("Informe uma descrição!"); return; }
+
+                const dados = estadoApp.dadosMes[estadoApp.mesAtual];
                 dados[tipo].push({ id: novoId, descricao: desc, vencimento: venc, valor: val });
-            } else if(tipo === 'parcelado') {
-                const estab = document.getElementById('addEstab').value.trim();
-                const compra = document.getElementById('addCompra').value.trim();
-                const venc = document.getElementById('addVenc').value.trim();
-                const val = parseFloat(document.getElementById('addVal').value) || 0;
-                if(!estab) { alert("Informe o estabelecimento!"); return; }
-                dados.parcelado.push({ id: novoId, estabelecimento: estab, compra: compra, vencimento: venc, valorParcela: val });
+
             } else if(tipo === 'avista') {
                 const estab = document.getElementById('addEstab').value.trim();
-                const data = document.getElementById('addCompra').value.trim();
-                const venc = document.getElementById('addVenc').value.trim();
+                const dataCompra = document.getElementById('addCompra').value; // 'YYYY-MM-DD'
                 const val = parseFloat(document.getElementById('addVal').value) || 0;
-                if(!estab) { alert("Informe o estabelecimento!"); return; }
-                dados.avista.push({ id: novoId, estabelecimento: estab, data: data, vencimento: venc, valor: val });
+                if(!estab || !dataCompra) { alert("Informe o estabelecimento e a data!"); return; }
+
+                // Calcula em qual mês da fatura este lançamento vai parar
+                const mesDestino = calcularMesFatura(dataCompra, estadoApp.diaFechamentoCartao);
+                garantirEstruturaMes(mesDestino);
+
+                estadoApp.dadosMes[mesDestino].avista.push({
+                    id: novoId,
+                    estabelecimento: estab,
+                    data: dataCompra,
+                    valor: val
+                });
+
+                const [anoD, mesD] = mesDestino.split('-');
+                alert(`Compra lançada com sucesso na fatura de ${mesD}/${anoD}!`);
+
+            } else if(tipo === 'parcelado') {
+                const estab = document.getElementById('addEstab').value.trim();
+                const dataCompra = document.getElementById('addCompra').value; // 'YYYY-MM-DD'
+                const numParcelas = parseInt(document.getElementById('addNumParcelas').value) || 1;
+                const valParcela = parseFloat(document.getElementById('addVal').value) || 0;
+
+                if(!estab || !dataCompra) { alert("Informe o estabelecimento e a data!"); return; }
+
+                // Calcula o primeiro mês da fatura
+                const mesBaseFatura = calcularMesFatura(dataCompra, estadoApp.diaFechamentoCartao);
+
+                // Lança cada parcela nos meses subsequentes
+                for(let i = 0; i < numParcelas; i++) {
+                    const mesDestino = somarMesesKey(mesBaseFatura, i);
+                    garantirEstruturaMes(mesDestino);
+
+                    estadoApp.dadosMes[mesDestino].parcelado.push({
+                        id: novoId + i,
+                        estabelecimento: `${estab} (${i+1}/${numParcelas})`,
+                        compra: dataCompra,
+                        valorParcela: valParcela
+                    });
+                }
+
+                alert(`${numParcelas} parcela(s) gerada(s) a partir da fatura inicial!`);
             }
 
             salvarStorage();
@@ -589,7 +708,7 @@
 
         function salvarPagamentoFatura() {
             const val = parseFloat(document.getElementById('inputValorPagoFatura').value) || 0;
-            const dt = document.getElementById('inputDataPagoFatura').value.trim() || '';
+            const dt = document.getElementById('inputDataPagoFatura').value || '';
             estadoApp.dadosMes[estadoApp.mesAtual].pagamentoFatura = { valorPago: val, dataPagamento: dt };
             salvarStorage();
             atualizarInterface();
