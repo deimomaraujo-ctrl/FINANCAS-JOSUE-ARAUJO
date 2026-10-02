@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanÁas JosuÈ Ara˙jo</title>
+    <title>Finan√ßas Josu√© Ara√∫jo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -38,7 +38,7 @@
                     <i class="fa-solid fa-wallet"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base leading-tight">FinanÁas JosuÈ Ara˙jo</h1>
+                    <h1 class="font-bold text-base leading-tight">Finan√ßas Josu√© Ara√∫jo</h1>
                     <p class="text-xs text-slate-400">Controle Financeiro Executivo</p>
                 </div>
             </div>
@@ -48,28 +48,28 @@
                 </button>
                 <button onclick="abrirModalTransacao()" class="bg-accentGreen hover:bg-emerald-600 text-slate-950 font-semibold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1.5 transition">
                     <i class="fa-solid fa-plus"></i>
-                    <span>Nova TransaÁ„o</span>
+                    <span>Nova Transa√ß√£o</span>
                 </button>
             </div>
         </div>
     </header>
 
     <main class="max-w-md mx-auto px-4 mt-4 space-y-4">
-        <!-- Seletor de MÍs -->
+        <!-- Seletor de M√™s -->
         <div class="bg-cardBg border border-borderCol rounded-2xl p-3 flex items-center justify-between">
             <button onclick="mudarMes(-1)" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition">
                 <i class="fa-solid fa-chevron-left text-xs"></i>
             </button>
             <div class="text-center">
                 <span id="displayMesAno" class="font-bold text-sm text-emerald-400 uppercase tracking-wide">Setembro / 2026</span>
-                <p class="text-[10px] text-slate-400">MÍs Ativo & Sincronizado</p>
+                <p class="text-[10px] text-slate-400">M√™s Ativo & Sincronizado</p>
             </div>
             <button onclick="mudarMes(1)" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition">
                 <i class="fa-solid fa-chevron-right text-xs"></i>
             </button>
         </div>
 
-        <!-- MENU PRINCIPAL: Ordem Exata -->
+        <!-- MENU PRINCIPAL -->
         <!-- 1. ENTRADAS (RENDA) -->
         <div class="bg-cardBg border border-borderCol rounded-2xl p-4 shadow-sm relative">
             <div class="flex items-center justify-between mb-1">
@@ -79,43 +79,43 @@
                 </div>
             </div>
             <div id="valorRenda" class="text-2xl font-black text-accentGreen tracking-tight">R$ 0,00</div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Sal·rio + Extras</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Sal√°rio + Extras</p>
             <button onclick="editarRenda()" class="mt-3 text-xs text-emerald-400 hover:underline flex items-center space-x-1 font-medium">
                 <i class="fa-regular fa-pen-to-square"></i>
                 <span>Editar Renda</span>
             </button>
         </div>
 
-        <!-- 2. TOTAL DE DÕVIDAS -->
+        <!-- 2. TOTAL DE D√çVIDAS -->
         <div class="bg-cardBg border border-borderCol rounded-2xl p-4 shadow-sm relative">
             <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-semibold text-slate-400 tracking-wider">TOTAL DE DÕVIDAS</span>
+                <span class="text-xs font-semibold text-slate-400 tracking-wider">TOTAL DE D√çVIDAS</span>
                 <div class="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center text-accentRed text-xs">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
                 </div>
             </div>
             <div id="valorTotalDividas" class="text-2xl font-black text-accentRed tracking-tight">R$ 0,00</div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Fixas + Variadas + Cartıes</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Fixas + Variadas + Cart√µes</p>
             <span class="mt-3 inline-block text-[10px] text-slate-400">Comprometimento mensal</span>
         </div>
 
-        <!-- 3. PREVIS√O DE SOBRA -->
+        <!-- 3. PREVIS√ÉO DE SOBRA -->
         <div class="bg-cardBg border border-borderCol rounded-2xl p-4 shadow-sm relative">
             <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-semibold text-slate-400 tracking-wider">PREVIS√O DE SOBRA</span>
+                <span class="text-xs font-semibold text-slate-400 tracking-wider">PREVIS√ÉO DE SOBRA</span>
                 <div class="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-accentBlue text-xs">
                     <i class="fa-solid fa-piggy-bank"></i>
                 </div>
             </div>
             <div id="valorPrevisaoSobra" class="text-2xl font-black text-blue-400 tracking-tight">R$ 0,00</div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Renda Menos DÌvidas</p>
-            <span id="badgePrevisaoSobra" class="mt-3 inline-block text-[10px] font-medium">Livre para o mÍs</span>
+            <p class="text-[11px] text-slate-400 mt-0.5">Renda Menos D√≠vidas</p>
+            <span id="badgePrevisaoSobra" class="mt-3 inline-block text-[10px] font-medium">Livre para o m√™s</span>
         </div>
 
-        <!-- 4. CONTA BANC¡RIA -->
+        <!-- 4. CONTA BANC√ÅRIA -->
         <div class="bg-cardBg border border-borderCol rounded-2xl p-4 shadow-sm relative">
             <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-semibold text-slate-400 tracking-wider">CONTA BANC¡RIA</span>
+                <span class="text-xs font-semibold text-slate-400 tracking-wider">CONTA BANC√ÅRIA</span>
                 <div class="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-xs">
                     <i class="fa-solid fa-building-columns"></i>
                 </div>
@@ -128,41 +128,51 @@
             </button>
         </div>
 
-        <!-- MÛdulos de Abas Detalhadas -->
+        <!-- M√≥dulos de Abas Detalhadas -->
         <div class="pt-2">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">MÛdulos de Controle Detalhado</h3>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">M√≥dulos de Controle Detalhado</h3>
             
             <!-- Barra de Abas Horizontal -->
             <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-2">
-                <button onclick="mudarAba('fixas')" id="tabBtn-fixas" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-emerald-600 text-white transition">?? DÌvidas Fixas</button>
-                <button onclick="mudarAba('variadas')" id="tabBtn-variadas" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition">?? DÌvidas Variadas</button>
-                <button onclick="mudarAba('parcelado')" id="tabBtn-parcelado" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition">?? Cart„o Parcelado</button>
-                <button onclick="mudarAba('avista')" id="tabBtn-avista" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition">??? Cart„o ¿ Vista</button>
-                <button onclick="mudarAba('fatura')" id="tabBtn-fatura" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition">?? Pagamento de Fatura</button>
+                <button onclick="mudarAba('fixas')" id="tabBtn-fixas" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-emerald-600 text-white transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-thumbtack text-xs"></i><span>D√≠vidas Fixas</span>
+                </button>
+                <button onclick="mudarAba('variadas')" id="tabBtn-variadas" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-shuffle text-xs"></i><span>D√≠vidas Variadas</span>
+                </button>
+                <button onclick="mudarAba('parcelado')" id="tabBtn-parcelado" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-credit-card text-xs"></i><span>Cart√£o Parcelado</span>
+                </button>
+                <button onclick="mudarAba('avista')" id="tabBtn-avista" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-bag-shopping text-xs"></i><span>Cart√£o √Ä Vista</span>
+                </button>
+                <button onclick="mudarAba('fatura')" id="tabBtn-fatura" class="px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-receipt text-xs"></i><span>Pagamento de Fatura</span>
+                </button>
             </div>
         </div>
 
-        <!-- Conte˙do das Abas -->
+        <!-- Conte√∫do das Abas -->
         <div id="conteudoAbas" class="bg-cardBg border border-borderCol rounded-2xl p-4">
-            <!-- Conte˙do injetado via JavaScript -->
+            <!-- Conte√∫do injetado via JavaScript -->
         </div>
     </main>
 
-    <!-- Modal Generico -->
+    <!-- Modal Gen√©rico -->
     <div id="modalTransacao" onclick="fecharModalFora(event)" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-cardBg border border-borderCol rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl relative">
             <div class="flex items-center justify-between">
-                <h3 id="modalTitulo" class="font-bold text-base text-slate-100">Nova TransaÁ„o</h3>
+                <h3 id="modalTitulo" class="font-bold text-base text-slate-100">Nova Transa√ß√£o</h3>
                 <button onclick="fecharModal()" class="text-slate-400 hover:text-slate-100"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="modalFormCorpo" class="space-y-3">
-                <!-- Formul·rio din‚mico -->
+                <!-- Formul√°rio din√¢mico -->
             </div>
         </div>
     </div>
 
     <script>
-        // Estado Global da AplicaÁ„o
+        // Estado Global
         let estadoApp = {
             mesAtual: '2026-09',
             renda: 4833.63,
@@ -174,10 +184,9 @@
         function carregarDados() {
             const salvo = localStorage.getItem('financas_josue_araujo_data');
             if (salvo) {
-                try { estadoApp = JSON.parse(salvo); } catch(e) { console.error("Erro ao carregar dados", e); }
+                try { estadoApp = JSON.parse(salvo); } catch(e) {}
             }
 
-            // InicializaÁ„o do MÍs Padr„o (Setembro/2026) se n„o existir
             if (!estadoApp.dadosMes['2026-09']) {
                 estadoApp.dadosMes['2026-09'] = {
                     fixas: [
@@ -185,7 +194,7 @@
                         { id: 2, descricao: 'ENERGINSA - CASA ATUAL', vencimento: '05/09/2026', valor: 123.33 },
                         { id: 3, descricao: 'BRK - CASA ATUAL', vencimento: '10/09/2026', valor: 107.45 },
                         { id: 4, descricao: 'PLANO GLIMA', vencimento: '05/09/2026', valor: 317.88 },
-                        { id: 5, descricao: 'CART√O SAN MARINO', vencimento: '05/09/2026', valor: 58.15 }
+                        { id: 5, descricao: 'CART√ÉO SAN MARINO', vencimento: '05/09/2026', valor: 58.15 }
                     ],
                     variadas: [],
                     parcelado: [
@@ -193,30 +202,27 @@
                         { id: 2, estabelecimento: 'NOSSO LAR', compra: '16-ago', vencimento: '28/09/2026', valorParcela: 160.38 },
                         { id: 3, estabelecimento: 'JB BIKE', compra: '19-ago', vencimento: '28/09/2026', valorParcela: 80.80 },
                         { id: 4, estabelecimento: 'SUBEXERCICIO', compra: '20-ago', vencimento: '28/09/2026', valorParcela: 109.25 },
-                        { id: 5, estabelecimento: 'FAR-EST¡DIO', compra: '24-ago', vencimento: '28/09/2026', valorParcela: 135.60 }
+                        { id: 5, estabelecimento: 'FAR-EST√ÅDIO', compra: '24-ago', vencimento: '28/09/2026', valorParcela: 135.60 }
                     ],
                     avista: [
-                        { id: 1, estabelecimento: 'CART√O DE TODOS', data: '15-ago', vencimento: '28/09/2026', valor: 35.40 },
-                        { id: 2, estabelecimento: 'SUPERMERCADO CAMPE√O', data: '18-ago', vencimento: '28/09/2026', valor: 168.33 },
+                        { id: 1, estabelecimento: 'CART√ÉO DE TODOS', data: '15-ago', vencimento: '28/09/2026', valor: 35.40 },
+                        { id: 2, estabelecimento: 'SUPERMERCADO CAMPE√ÉO', data: '18-ago', vencimento: '28/09/2026', valor: 168.33 },
                         { id: 3, estabelecimento: 'SANALI PETRO', data: '19-ago', vencimento: '28/09/2026', valor: 85.80 },
                         { id: 4, estabelecimento: 'M. D. S. L. LIMA', data: '20-ago', vencimento: '28/09/2026', valor: 85.00 },
-                        { id: 5, estabelecimento: 'ART*SOFTWARE', data: '20-ago', vencimento: '28/09/2026', valor: 10.20 }, // Corrigido erro de sintaxe 10,20 -> 10.20
+                        { id: 5, estabelecimento: 'ART*SOFTWARE', data: '20-ago', vencimento: '28/09/2026', valor: 10.20 },
                         { id: 6, estabelecimento: 'RIBEIROSABOR', data: '25-ago', vencimento: '28/09/2026', valor: 15.00 }
                     ],
                     pagamentoFatura: { valorPago: 2056.26, dataPagamento: '28/09/2026' }
                 };
             }
 
-            // Garante que o mÍs selecionado possui estrutura
             garantirEstruturaMes(estadoApp.mesAtual);
-
             salvarStorage();
             atualizarInterface();
         }
 
         function garantirEstruturaMes(mesKey) {
             if (!estadoApp.dadosMes[mesKey]) {
-                // Ao criar um mÍs novo, copia as dÌvidas fixas do mÍs anterior para facilitar
                 let fixasAnteriores = [];
                 const meses = Object.keys(estadoApp.dadosMes).sort();
                 if (meses.length > 0) {
@@ -255,19 +261,15 @@
         }
 
         function atualizarInterface() {
-            // Nome do MÍs
             const [ano, mes] = estadoApp.mesAtual.split('-');
-            const mesesStr = ['Janeiro','Fevereiro','MarÁo','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const mesesStr = ['Janeiro','Fevereiro','Mar√ßo','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
             document.getElementById('displayMesAno').innerText = `${mesesStr[Number(mes)-1]} / ${ano}`;
 
-            // Renda e Conta
             document.getElementById('valorRenda').innerText = formatarMoeda(estadoApp.renda);
             document.getElementById('valorContaBancaria').innerText = formatarMoeda(estadoApp.contaBancaria);
 
-            // Dados do MÍs Atual
             const dados = estadoApp.dadosMes[estadoApp.mesAtual];
             
-            // C·lculos
             let totalFixas = dados.fixas.reduce((acc, i) => acc + Number(i.valor || 0), 0);
             let totalVariadas = dados.variadas.reduce((acc, i) => acc + Number(i.valor || 0), 0);
             let totalParcelado = dados.parcelado.reduce((acc, i) => acc + Number(i.valorParcela || 0), 0);
@@ -286,11 +288,11 @@
             if(previsaoSobra < 0) {
                 elPrevisao.className = "text-2xl font-black text-rose-500 tracking-tight";
                 badgePrevisao.className = "mt-3 inline-block text-[10px] text-rose-400 font-medium";
-                badgePrevisao.innerText = "AtenÁ„o: Saldo negativo";
+                badgePrevisao.innerText = "Aten√ß√£o: Saldo negativo";
             } else {
                 elPrevisao.className = "text-2xl font-black text-blue-400 tracking-tight";
                 badgePrevisao.className = "mt-3 inline-block text-[10px] text-emerald-400 font-medium";
-                badgePrevisao.innerText = "Livre para o mÍs";
+                badgePrevisao.innerText = "Livre para o m√™s";
             }
 
             renderizarAbaAtiva();
@@ -301,9 +303,9 @@
             ['fixas','variadas','parcelado','avista','fatura'].forEach(a => {
                 const btn = document.getElementById(`tabBtn-${a}`);
                 if(a === aba) {
-                    btn.className = "px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-emerald-600 text-white transition shadow-sm";
+                    btn.className = "px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-emerald-600 text-white transition flex items-center space-x-1.5 shadow-sm";
                 } else {
-                    btn.className = "px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+                    btn.className = "px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5";
                 }
             });
             renderizarAbaAtiva();
@@ -316,13 +318,13 @@
             if (estadoApp.abaAtiva === 'fixas') {
                 let html = `
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="font-bold text-sm text-slate-200">DÌvidas Recorrentes / Fixas</h4>
+                        <h4 class="font-bold text-sm text-slate-200">D√≠vidas Recorrentes / Fixas</h4>
                         <button onclick="adicionarItem('fixas')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs px-2.5 py-1 rounded-lg font-medium transition">+ Adicionar</button>
                     </div>
                     <div class="space-y-2">
                 `;
                 if(dados.fixas.length === 0) {
-                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma dÌvida fixa registrada neste mÍs.</p>`;
+                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma d√≠vida fixa registrada neste m√™s.</p>`;
                 } else {
                     dados.fixas.forEach(item => {
                         html += `
@@ -344,13 +346,13 @@
             } else if (estadoApp.abaAtiva === 'variadas') {
                 let html = `
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="font-bold text-sm text-slate-200">DÌvidas Variadas / Imprevistos</h4>
+                        <h4 class="font-bold text-sm text-slate-200">D√≠vidas Variadas / Imprevistos</h4>
                         <button onclick="adicionarItem('variadas')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs px-2.5 py-1 rounded-lg font-medium transition">+ Adicionar</button>
                     </div>
                     <div class="space-y-2">
                 `;
                 if(dados.variadas.length === 0) {
-                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma dÌvida variada registrada neste mÍs.</p>`;
+                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma d√≠vida variada registrada neste m√™s.</p>`;
                 } else {
                     dados.variadas.forEach(item => {
                         html += `
@@ -372,13 +374,13 @@
             } else if (estadoApp.abaAtiva === 'parcelado') {
                 let html = `
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="font-bold text-sm text-slate-200">Cart„o de CrÈdito - Parcelamentos</h4>
+                        <h4 class="font-bold text-sm text-slate-200">Cart√£o de Cr√©dito - Parcelamentos</h4>
                         <button onclick="adicionarItem('parcelado')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs px-2.5 py-1 rounded-lg font-medium transition">+ Nova Parcela</button>
                     </div>
                     <div class="space-y-2">
                 `;
                 if(dados.parcelado.length === 0) {
-                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma compra parcelada neste mÍs.</p>`;
+                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma compra parcelada neste m√™s.</p>`;
                 } else {
                     dados.parcelado.forEach(item => {
                         html += `
@@ -400,13 +402,13 @@
             } else if (estadoApp.abaAtiva === 'avista') {
                 let html = `
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="font-bold text-sm text-slate-200">Cart„o de CrÈdito - Compras ¿ Vista</h4>
+                        <h4 class="font-bold text-sm text-slate-200">Cart√£o de Cr√©dito - Compras √Ä Vista</h4>
                         <button onclick="adicionarItem('avista')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs px-2.5 py-1 rounded-lg font-medium transition">+ Nova Compra</button>
                     </div>
                     <div class="space-y-2">
                 `;
                 if(dados.avista.length === 0) {
-                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma compra ‡ vista neste mÍs.</p>`;
+                    html += `<p class="text-xs text-slate-400 text-center py-6">Nenhuma compra √† vista neste m√™s.</p>`;
                 } else {
                     dados.avista.forEach(item => {
                         html += `
@@ -437,8 +439,8 @@
                     <div class="space-y-4">
                         <h4 class="font-bold text-sm text-slate-200">Pagamento Consolidado da Fatura</h4>
                         <div class="bg-slate-800/60 p-3 rounded-xl space-y-1.5 text-xs border border-slate-700/50">
-                            <div class="flex justify-between"><span class="text-slate-400">Total Parcelado do MÍs:</span><span class="font-bold">${formatarMoeda(totalParcelado)}</span></div>
-                            <div class="flex justify-between"><span class="text-slate-400">Total ¿ Vista do MÍs:</span><span class="font-bold">${formatarMoeda(totalAvista)}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-400">Total Parcelado do M√™s:</span><span class="font-bold">${formatarMoeda(totalParcelado)}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-400">Total √Ä Vista do M√™s:</span><span class="font-bold">${formatarMoeda(totalAvista)}</span></div>
                             <div class="border-t border-slate-700 pt-1.5 flex justify-between text-emerald-400 font-bold"><span>Valor Total da Fatura:</span><span>${formatarMoeda(totalFatura)}</span></div>
                         </div>
                         <div class="space-y-2">
@@ -459,12 +461,12 @@
             }
         }
 
-        // FunÁıes de AÁ„o e Modais
+        // Fun√ß√µes de Modal e A√ß√µes
         function editarRenda() {
             document.getElementById('modalTitulo').innerText = "Editar Renda Mensal";
             document.getElementById('modalFormCorpo').innerHTML = `
                 <div>
-                    <label class="text-xs text-slate-400">Sal·rio + Extras (R$)</label>
+                    <label class="text-xs text-slate-400">Sal√°rio + Extras (R$)</label>
                     <input type="number" step="0.01" id="valRendaInput" value="${estadoApp.renda}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
                 </div>
                 <button onclick="confirmarEdicaoRenda()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2 rounded-xl text-xs mt-2 transition">Salvar Renda</button>
@@ -502,12 +504,12 @@
 
         function abrirModalTransacao() {
             if(estadoApp.abaAtiva === 'fatura') {
-                document.getElementById('modalTitulo').innerText = "Escolha o Tipo de Cart„o";
+                document.getElementById('modalTitulo').innerText = "Escolha o Tipo de Cart√£o";
                 document.getElementById('modalFormCorpo').innerHTML = `
-                    <p class="text-xs text-slate-400 mb-2">Selecione o tipo de compra para adicionar ‡ fatura:</p>
+                    <p class="text-xs text-slate-400 mb-2">Selecione o tipo de compra para adicionar √† fatura:</p>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="adicionarItem('avista')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-medium text-center">??? Cart„o ¿ Vista</button>
-                        <button onclick="adicionarItem('parcelado')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-medium text-center">?? Cart„o Parcelado</button>
+                        <button onclick="adicionarItem('avista')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-medium text-center">Cart√£o √Ä Vista</button>
+                        <button onclick="adicionarItem('parcelado')" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-medium text-center">Cart√£o Parcelado</button>
                     </div>
                 `;
                 document.getElementById('modalTransacao').classList.remove('hidden');
@@ -521,7 +523,7 @@
             let html = '';
             if(tipo === 'fixas' || tipo === 'variadas') {
                 html = `
-                    <div><label class="text-xs text-slate-400">DescriÁ„o</label><input type="text" id="addDesc" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Descri√ß√£o</label><input type="text" id="addDesc" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Vencimento</label><input type="text" id="addVenc" placeholder="Ex: 05/09/2026" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Valor (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                 `;
@@ -553,7 +555,7 @@
                 const desc = document.getElementById('addDesc').value.trim();
                 const venc = document.getElementById('addVenc').value.trim();
                 const val = parseFloat(document.getElementById('addVal').value) || 0;
-                if(!desc) { alert("Informe uma descriÁ„o!"); return; }
+                if(!desc) { alert("Informe uma descri√ß√£o!"); return; }
                 dados[tipo].push({ id: novoId, descricao: desc, vencimento: venc, valor: val });
             } else if(tipo === 'parcelado') {
                 const estab = document.getElementById('addEstab').value.trim();
@@ -604,12 +606,11 @@
             }
         }
 
-        // Backup e RestauraÁ„o de Dados
         function abrirBackupModal() {
-            document.getElementById('modalTitulo').innerText = "Backup e SeguranÁa";
+            document.getElementById('modalTitulo').innerText = "Backup e Seguran√ßa";
             document.getElementById('modalFormCorpo').innerHTML = `
                 <div class="space-y-3">
-                    <p class="text-xs text-slate-400">Exporte ou importe seus dados para garantir a seguranÁa das suas informaÁıes financeiras.</p>
+                    <p class="text-xs text-slate-400">Exporte ou importe seus dados para garantir a seguran√ßa das suas informa√ß√µes financeiras.</p>
                     <button onclick="exportarDados()" class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-2 rounded-xl text-xs border border-slate-700 transition flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-download"></i>
                         <span>Exportar Backup (JSON)</span>
@@ -656,7 +657,7 @@
                         fecharModal();
                         alert("Dados importados com sucesso!");
                     } else {
-                        alert("Arquivo inv·lido!");
+                        alert("Arquivo inv√°lido!");
                     }
                 } catch(err) {
                     alert("Erro ao ler o arquivo de backup.");
@@ -665,7 +666,6 @@
             reader.readAsText(file);
         }
 
-        // Tecla ESC fecha modal
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') fecharModal();
         });
