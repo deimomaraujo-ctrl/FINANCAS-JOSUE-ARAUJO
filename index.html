@@ -315,6 +315,14 @@
         // Variável temporária para armazenar dados em fluxo de edição
         let edicaoTemp = null;
 
+        function getFechamentoCartaoMes(mesKey) {
+            const key = mesKey || estadoApp.mesAtual;
+            if (estadoApp.dadosMes && estadoApp.dadosMes[key] && typeof estadoApp.dadosMes[key].diaFechamentoCartao === 'number') {
+                return estadoApp.dadosMes[key].diaFechamentoCartao;
+            }
+            return estadoApp.diaFechamentoCartao || 25;
+        }
+
         function sanitizarEstado() {
             if (!estadoApp || typeof estadoApp !== 'object') estadoApp = {};
             if (!estadoApp.mesAtual) estadoApp.mesAtual = '2026-09';
@@ -328,6 +336,7 @@
                 const d = estadoApp.dadosMes[mesKey];
                 if (d && typeof d === 'object') {
                     if (typeof d.renda !== 'number') d.renda = estadoApp.rendaPadrao;
+                    if (typeof d.diaFechamentoCartao !== 'number') d.diaFechamentoCartao = estadoApp.diaFechamentoCartao;
                     if (!Array.isArray(d.fixas)) d.fixas = [];
                     if (!Array.isArray(d.variadas)) d.variadas = [];
                     if (!Array.isArray(d.parcelado)) d.parcelado = [];
@@ -353,6 +362,7 @@
             if (!estadoApp.dadosMes['2026-09']) {
                 estadoApp.dadosMes['2026-09'] = {
                     renda: 4833.63,
+                    diaFechamentoCartao: 25,
                     fixas: [
                         { id: 1, descricao: 'ABANET', vencimento: '2026-09-05', valor: 108.08, pago: true, dataPagamento: '2026-09-05' },
                         { id: 2, descricao: 'ENERGINSA - CASA ATUAL', vencimento: '2026-09-05', valor: 123.33, pago: true, dataPagamento: '2026-09-05' },
@@ -391,6 +401,7 @@
             if (!estadoApp.dadosMes[mesKey]) {
                 let fixasAnteriores = [];
                 let rendaAnterior = estadoApp.rendaPadrao;
+                let diaFechAnterior = estadoApp.diaFechamentoCartao;
 
                 const meses = Object.keys(estadoApp.dadosMes).sort();
                 if (meses.length > 0) {
@@ -412,10 +423,14 @@
                     if(dUltimo && typeof dUltimo.renda === 'number') {
                         rendaAnterior = dUltimo.renda;
                     }
+                    if(dUltimo && typeof dUltimo.diaFechamentoCartao === 'number') {
+                        diaFechAnterior = dUltimo.diaFechamentoCartao;
+                    }
                 }
 
                 estadoApp.dadosMes[mesKey] = {
                     renda: rendaAnterior,
+                    diaFechamentoCartao: diaFechAnterior,
                     fixas: fixasAnteriores,
                     variadas: [],
                     parcelado: [],
@@ -557,7 +572,7 @@
                 const numMes = Number(mes) || 9;
                 
                 document.getElementById('displayMesAno').innerText = `${mesesStr[numMes-1]} / ${ano}`;
-                document.getElementById('labelFechamentoCartao').innerText = `Dia ${estadoApp.diaFechamentoCartao}`;
+                document.getElementById('labelFechamentoCartao').innerText = `Dia ${getFechamentoCartaoMes(estadoApp.mesAtual)}`;
 
                 const dados = estadoApp.dadosMes[estadoApp.mesAtual];
                 const rendaDoMes = (dados && typeof dados.renda === 'number') ? dados.renda : estadoApp.rendaPadrao;
@@ -1147,13 +1162,14 @@
         }
 
         function editarFechamentoCartao() {
+            const diaFechAtual = getFechamentoCartaoMes(estadoApp.mesAtual);
             abrirModalGarantido("Dia de Fechamento do Cartão", `
                 <div>
                     <label class="text-xs text-slate-400 block mb-1">Dia do mês em que a fatura fecha (1 a 31):</label>
-                    <input type="number" min="1" max="31" id="inputDiaFechamento" value="${estadoApp.diaFechamentoCartao}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                    <input type="number" min="1" max="31" id="inputDiaFechamento" value="${diaFechAtual}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                 </div>
-                <p class="text-[11px] text-slate-400 mt-1">Exemplo: Se o fechamento for dia 25, compras do dia 26 em diante virão na próxima fatura.</p>
-                <button type="button" onclick="salvarFechamentoCartao()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Alteração</button>
+                <p class="text-[11px] text-emerald-400 mt-1">🗓️ Esta alteração afeta exclusivamente o mês ativo (${estadoApp.mesAtual}).</p>
+                <button type="button" onclick="salvarFechamentoCartao()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Alteração do Mês</button>
             `);
         }
 
@@ -1163,7 +1179,9 @@
                 alert("Por favor, digite um dia válido entre 1 e 31.");
                 return;
             }
-            estadoApp.diaFechamentoCartao = val;
+            if (estadoApp.dadosMes[estadoApp.mesAtual]) {
+                estadoApp.dadosMes[estadoApp.mesAtual].diaFechamentoCartao = val;
+            }
             salvarStorage();
             fecharModal();
             atualizarInterface();
@@ -1250,6 +1268,7 @@
 
             let html = '';
             const hoje = new Date().toISOString().split('T')[0];
+            const diaFechAtual = getFechamentoCartaoMes(estadoApp.mesAtual);
 
             if(tipo === 'fixas' || tipo === 'variadas') {
                 html = `
@@ -1266,14 +1285,14 @@
                     <div><label class="text-xs text-slate-400">Data da Compra</label><input type="date" id="addCompra" value="${hoje}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Nº de Parcelas</label><input type="number" min="1" max="72" id="addNumParcelas" value="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Valor de Cada Parcela (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <p class="text-[10px] text-emerald-400">Fechamento considerado: Dia ${estadoApp.diaFechamentoCartao}</p>
+                    <p class="text-[10px] text-emerald-400">Fechamento considerado neste mês: Dia ${diaFechAtual}</p>
                 `;
             } else if(tipo === 'avista') {
                 html = `
                     <div><label class="text-xs text-slate-400">Estabelecimento</label><input type="text" id="addEstab" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Data da Compra</label><input type="date" id="addCompra" value="${hoje}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Valor Total (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <p class="text-[10px] text-emerald-400">Fechamento considerado: Dia ${estadoApp.diaFechamentoCartao}</p>
+                    <p class="text-[10px] text-emerald-400">Fechamento considerado neste mês: Dia ${diaFechAtual}</p>
                 `;
             } else if(tipo === 'gastoConta') {
                 html = `
@@ -1335,7 +1354,11 @@
                 const val = parseFloat(document.getElementById('addVal').value) || 0;
                 if(!estab || !dataCompra) { alert("Informe o estabelecimento e a data!"); return; }
 
-                const mesDestino = calcularMesFatura(dataCompra, estadoApp.diaFechamentoCartao);
+                const mesCompraKey = dataCompra.substring(0, 7);
+                garantirEstruturaMes(mesCompraKey);
+                const diaFech = getFechamentoCartaoMes(mesCompraKey);
+
+                const mesDestino = calcularMesFatura(dataCompra, diaFech);
                 garantirEstruturaMes(mesDestino);
 
                 estadoApp.dadosMes[mesDestino].avista.push({
@@ -1356,7 +1379,11 @@
 
                 if(!estab || !dataCompra) { alert("Informe o estabelecimento e a data!"); return; }
 
-                const mesBaseFatura = calcularMesFatura(dataCompra, estadoApp.diaFechamentoCartao);
+                const mesCompraKey = dataCompra.substring(0, 7);
+                garantirEstruturaMes(mesCompraKey);
+                const diaFech = getFechamentoCartaoMes(mesCompraKey);
+
+                const mesBaseFatura = calcularMesFatura(dataCompra, diaFech);
 
                 for(let i = 0; i < numParcelas; i++) {
                     const mesDestino = somarMesesKey(mesBaseFatura, i);
