@@ -477,12 +477,16 @@
             return dataISO;
         }
 
+        // REGRA DE FECHAMENTO EXATA (>= diaFechamento VAI PARA O PRÓXIMO MÊS)
         function calcularMesFatura(dataCompraStr, diaFechamento) {
             const [ano, mes, dia] = dataCompraStr.split('-').map(Number);
             let anoFatura = ano;
             let mesFatura = mes;
 
-            if (dia > diaFechamento) {
+            // Exemplo: se diaFechamento = 16:
+            // Compras até dia 15 (dia < 16) -> Mês Corrente
+            // Compras no dia 16 em diante (dia >= 16) -> Próximo Mês
+            if (dia >= diaFechamento) {
                 mesFatura += 1;
                 if (mesFatura > 12) {
                     mesFatura = 1;
@@ -1178,7 +1182,7 @@
                                         ${tagAssinatura}
                                         <span>${item.estabelecimento}</span>
                                     </p>
-                                    <p class="text-[10px] text-slate-400">Data: ${formatarDataBR(item.data)}</p>
+                                    <p class="text-[10px] text-slate-400">Data Compra: ${formatarDataBR(item.data)}</p>
                                 </div>
                                 <div class="flex items-center space-x-2 shrink-0">
                                     <span class="text-xs font-bold mr-1 text-rose-400">${formatarMoeda(item.valor)}</span>
@@ -1346,6 +1350,7 @@
             let html = '';
             const hoje = new Date().toISOString().split('T')[0];
             const diaFechAtual = getFechamentoCartaoMes(estadoApp.mesAtual);
+            const diaLimiteCorrente = diaFechAtual - 1;
 
             if(tipo === 'fixas' || tipo === 'variadas') {
                 html = `
@@ -1362,7 +1367,13 @@
                     <div><label class="text-xs text-slate-400">Data da Compra</label><input type="date" id="addCompra" value="${hoje}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Nº de Parcelas</label><input type="number" min="1" max="72" id="addNumParcelas" value="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Valor de Cada Parcela (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
-                    <p class="text-[10px] text-emerald-400">Fechamento considerado neste mês: Dia ${diaFechAtual}</p>
+                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-[11px] text-amber-300 space-y-1">
+                        <p class="font-bold flex items-center gap-1"><i class="fa-solid fa-circle-info"></i> Fechamento da Fatura: Dia ${diaFechAtual}</p>
+                        <p class="text-slate-400 text-[10px] leading-relaxed">
+                            • Compras feitas <b>até dia ${diaLimiteCorrente > 0 ? diaLimiteCorrente : 1}</b> iniciam na fatura do mês atual.<br>
+                            • Compras feitas no <b>dia ${diaFechAtual} em diante</b> virão na fatura do próximo mês.
+                        </p>
+                    </div>
                 `;
             } else if(tipo === 'avista' || tipo === 'assinatura') {
                 const ehAssinaturaPadrao = (tipo === 'assinatura');
@@ -1376,7 +1387,13 @@
                             <span>É uma Assinatura Recorrente (Debita todo mês)</span>
                         </label>
                     </div>
-                    <p class="text-[10px] text-indigo-400">🔄 Assinaturas são inseridas automaticamente em todos os meses futuros.</p>
+                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-[11px] text-amber-300 space-y-1">
+                        <p class="font-bold flex items-center gap-1"><i class="fa-solid fa-circle-info"></i> Fechamento da Fatura: Dia ${diaFechAtual}</p>
+                        <p class="text-slate-400 text-[10px] leading-relaxed">
+                            • Compras feitas <b>até dia ${diaLimiteCorrente > 0 ? diaLimiteCorrente : 1}</b> entram na fatura do mês atual.<br>
+                            • Compras feitas no <b>dia ${diaFechAtual} em diante</b> irão para a fatura do próximo mês.
+                        </p>
+                    </div>
                 `;
             } else if(tipo === 'gastoConta') {
                 html = `
