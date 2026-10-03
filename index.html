@@ -210,7 +210,7 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO PWA SEGURO (NATIVO MOBILE)
+        // CONFIGURAÇÃO PWA SEGURO
         (function inicializarPWA() {
             try {
                 const svgIcon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="%2310b981" style="background:%230f172a;padding:50px;"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>`;
@@ -256,7 +256,7 @@
             }
         }
 
-        // Funções para Controle do Modal (Exibição Garantida)
+        // Funções para Controle do Modal
         function abrirModalGarantido(titulo, htmlCorpo) {
             document.getElementById('modalTitulo').innerText = titulo;
             document.getElementById('modalFormCorpo').innerHTML = htmlCorpo;
@@ -558,6 +558,102 @@
             }
         }
 
+        // SISTEMA DE EXCLUSÃO INTELIGENTE DE TRÊS NÍVEIS
+        function solicitarRemocaoItem(tipo, id) {
+            const dados = estadoApp.dadosMes[estadoApp.mesAtual];
+            if (!dados || !dados[tipo]) return;
+
+            const item = dados[tipo].find(i => i.id === id);
+            if (!item) return;
+
+            const nomeItem = item.descricao || item.estabelecimento || 'Este lançamento';
+            const valorStr = formatarMoeda(item.valor || item.valorParcela || 0);
+
+            // Nome limpo caso seja uma parcela do tipo "NOME (1/10)"
+            const nomeBase = nomeItem.replace(/\s*\(\d+\/\d+\)$/, '').trim();
+            const mesFormatado = document.getElementById('displayMesAno').innerText;
+
+            abrirModalGarantido("Excluir Lançamento", `
+                <div class="space-y-3">
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60">
+                        <p class="text-[11px] text-slate-400">Item selecionado para exclusão:</p>
+                        <p class="text-sm font-bold text-slate-100 mt-0.5">${nomeItem}</p>
+                        <p class="text-xs font-semibold text-rose-400 mt-0.5">${valorStr}</p>
+                    </div>
+
+                    <p class="text-xs text-slate-300 font-medium">Escolha como deseja remover este registro:</p>
+
+                    <div class="space-y-2">
+                        <button type="button" onclick="executarRemocao('${tipo}', ${id}, '${nomeBase.replace(/'/g, "\\'")}', 'apenas_este')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-semibold text-left transition active:scale-98 flex items-center justify-between">
+                            <div>
+                                <span class="text-slate-100 block">🗓️ Excluir Apenas Deste Mês</span>
+                                <span class="text-[10px] text-slate-400 font-normal">Apaga o registro somente em ${mesFormatado}</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                        </button>
+
+                        <button type="button" onclick="executarRemocao('${tipo}', ${id}, '${nomeBase.replace(/'/g, "\\'")}', 'este_e_futuros')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-amber-500/30 text-xs font-semibold text-left transition active:scale-98 flex items-center justify-between">
+                            <div>
+                                <span class="text-amber-300 block">⏩ Excluir Deste Mês e dos Futuros</span>
+                                <span class="text-[10px] text-slate-400 font-normal">Apaga a partir de ${mesFormatado} em diante</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                        </button>
+
+                        <button type="button" onclick="executarRemocao('${tipo}', ${id}, '${nomeBase.replace(/'/g, "\\'")}', 'todos')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-rose-500/40 text-xs font-semibold text-left transition active:scale-98 flex items-center justify-between">
+                            <div>
+                                <span class="text-rose-400 block">🚨 Excluir de TODOS os Meses</span>
+                                <span class="text-[10px] text-slate-400 font-normal">Remove do passado, presente e futuro</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function executarRemocao(tipo, idTarget, nomeBaseTarget, escopo) {
+            const mesAtualKey = estadoApp.mesAtual;
+
+            Object.keys(estadoApp.dadosMes).forEach(mesKey => {
+                const dadosDoMes = estadoApp.dadosMes[mesKey];
+                if (!dadosDoMes || !Array.isArray(dadosDoMes[tipo])) return;
+
+                let deveRemoverNoMes = false;
+
+                if (escopo === 'apenas_este') {
+                    if (mesKey === mesAtualKey) deveRemoverNoMes = true;
+                } else if (escopo === 'este_e_futuros') {
+                    if (mesKey >= mesAtualKey) deveRemoverNoMes = true;
+                } else if (escopo === 'todos') {
+                    deveRemoverNoMes = true;
+                }
+
+                if (deveRemoverNoMes) {
+                    dadosDoMes[tipo] = dadosDoMes[tipo].filter(item => {
+                        // 1. Se for o ID exato
+                        if (item.id === idTarget) return false;
+
+                        // 2. Para exclusões amplas (futuros/todos), apaga também itens com o mesmo nome base
+                        if (escopo !== 'apenas_este') {
+                            const nomeItem = item.descricao || item.estabelecimento || '';
+                            const nomeBaseItem = nomeItem.replace(/\s*\(\d+\/\d+\)$/, '').trim();
+
+                            if (nomeBaseItem.toLowerCase() === nomeBaseTarget.toLowerCase()) {
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    });
+                }
+            });
+
+            salvarStorage();
+            fecharModal();
+            atualizarInterface();
+        }
+
         function renderizarAbaAtiva() {
             const container = document.getElementById('conteudoAbas');
             const dados = estadoApp.dadosMes[estadoApp.mesAtual] || {};
@@ -597,7 +693,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3 shrink-0">
                                     <span class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
-                                    <button type="button" onclick="removerItem('fixas', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <button type="button" onclick="solicitarRemocaoItem('fixas', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -640,7 +736,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3 shrink-0">
                                     <span class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
-                                    <button type="button" onclick="removerItem('variadas', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <button type="button" onclick="solicitarRemocaoItem('variadas', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -669,7 +765,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valorParcela)}</span>
-                                    <button type="button" onclick="removerItem('parcelado', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <button type="button" onclick="solicitarRemocaoItem('parcelado', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -698,7 +794,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valor)}</span>
-                                    <button type="button" onclick="removerItem('avista', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <button type="button" onclick="solicitarRemocaoItem('avista', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -805,7 +901,7 @@
             atualizarInterface();
         }
 
-        // Botão + Nova Transação (Menu principal de escolha)
+        // Botão + Nova Transação
         function abrirModalTransacao() {
             abrirModalGarantido("Selecione o Tipo de Dívida", `
                 <p class="text-xs text-slate-400 mb-2">Qual tipo de lançamento deseja cadastrar?</p>
@@ -963,17 +1059,6 @@
             atualizarInterface();
         }
 
-        function removerItem(tipo, id) {
-            if (confirm("Tem certeza que deseja remover este item?")) {
-                const dados = estadoApp.dadosMes[estadoApp.mesAtual];
-                if (dados && dados[tipo]) {
-                    dados[tipo] = dados[tipo].filter(i => i.id !== id);
-                    salvarStorage();
-                    atualizarInterface();
-                }
-            }
-        }
-
         function salvarPagamentoFatura() {
             const val = parseFloat(document.getElementById('inputValorPagoFatura').value) || 0;
             const dt = document.getElementById('inputDataPagoFatura').value || '';
@@ -1045,7 +1130,6 @@
             if (e.key === 'Escape') fecharModal();
         });
 
-        // Inicialização Garantida em Dispositivos Móveis
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', carregarDados);
         } else {
