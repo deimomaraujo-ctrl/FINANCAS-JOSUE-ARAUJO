@@ -12,7 +12,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Finanças Josué">
     <meta name="application-name" content="Finanças Josué">
-    <meta name="description" content="Controle Financeiro Executivo - Josué Araújo">
 
     <!-- Ícone PWA e Apple Touch Icon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981' style='background:%230f172a;'><path d='M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>">
@@ -46,7 +45,9 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        button, input, select { touch-action: manipulation; cursor: pointer; }
+        button, input, select, a { touch-action: manipulation; }
+        #modalTransacao.hidden { display: none !important; }
+        #modalTransacao:not(.hidden) { display: flex !important; }
     </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -63,14 +64,14 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <button id="btnInstalarApp" onclick="solicitarInstalacaoPWA()" title="Instalar Aplicativo" class="hidden bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 p-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+                <button type="button" id="btnInstalarApp" onclick="solicitarInstalacaoPWA()" title="Instalar Aplicativo" class="hidden bg-emerald-500/20 text-emerald-400 p-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1 active:scale-95">
                     <i class="fa-solid fa-mobile-screen-button text-sm"></i>
                     <span class="hidden sm:inline">Instalar</span>
                 </button>
-                <button onclick="abrirBackupModal()" title="Backup de Dados" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-lg text-xs transition active:scale-95">
+                <button type="button" onclick="abrirBackupModal()" title="Backup de Dados" class="bg-slate-800 text-slate-300 p-2.5 rounded-lg text-xs transition active:scale-95">
                     <i class="fa-solid fa-database"></i>
                 </button>
-                <button onclick="abrirModalTransacao()" class="bg-accentGreen hover:bg-emerald-600 text-slate-950 font-semibold px-3 py-2 rounded-lg text-xs flex items-center space-x-1.5 transition active:scale-95">
+                <button type="button" onclick="abrirModalTransacao()" class="bg-accentGreen text-slate-950 font-semibold px-3 py-2 rounded-lg text-xs flex items-center space-x-1.5 transition active:scale-95">
                     <i class="fa-solid fa-plus"></i>
                     <span>Nova</span>
                     <i class="fa-solid fa-caret-down text-[10px] opacity-70"></i>
@@ -82,14 +83,14 @@
     <main class="max-w-md mx-auto px-4 mt-4 space-y-4">
         <!-- Seletor de Mês -->
         <div class="bg-cardBg border border-borderCol rounded-2xl p-3 flex items-center justify-between shadow-sm">
-            <button onclick="mudarMes(-1)" class="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition active:scale-95">
+            <button type="button" onclick="mudarMes(-1)" class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 active:bg-slate-700 transition active:scale-95">
                 <i class="fa-solid fa-chevron-left text-xs"></i>
             </button>
             <div class="text-center">
                 <span id="displayMesAno" class="font-bold text-sm text-emerald-400 uppercase tracking-wide">Setembro / 2026</span>
                 <p class="text-[10px] text-slate-400">Mês Ativo & Sincronizado</p>
             </div>
-            <button onclick="mudarMes(1)" class="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 hover:bg-slate-700 transition active:scale-95">
+            <button type="button" onclick="mudarMes(1)" class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 active:bg-slate-700 transition active:scale-95">
                 <i class="fa-solid fa-chevron-right text-xs"></i>
             </button>
         </div>
@@ -101,7 +102,7 @@
                 <span class="text-slate-300">Fechamento Fatura:</span>
                 <span id="labelFechamentoCartao" class="font-bold text-emerald-400">Dia 25</span>
             </div>
-            <button onclick="editarFechamentoCartao()" class="text-indigo-400 hover:underline font-medium text-[11px] p-1">
+            <button type="button" onclick="editarFechamentoCartao()" class="text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg font-medium text-[11px] active:bg-indigo-500/20 transition">
                 Alterar Dia
             </button>
         </div>
@@ -117,7 +118,7 @@
             </div>
             <div id="valorRenda" class="text-2xl font-black text-accentGreen tracking-tight">R$ 0,00</div>
             <p class="text-[11px] text-slate-400 mt-0.5">Salário + Extras (Deste Mês)</p>
-            <button onclick="editarRenda()" class="mt-3 text-xs text-emerald-400 hover:underline flex items-center space-x-1 font-medium p-1">
+            <button type="button" onclick="editarRenda()" class="mt-3 text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-medium active:bg-emerald-500/20 transition">
                 <i class="fa-regular fa-pen-to-square"></i>
                 <span>Editar Renda do Mês</span>
             </button>
@@ -159,7 +160,7 @@
             </div>
             <div id="valorContaBancaria" class="text-2xl font-black text-slate-100 tracking-tight">R$ 0,00</div>
             <p class="text-[11px] text-slate-400 mt-0.5">Saldo Atual em Conta</p>
-            <button onclick="atualizarContaBancaria()" class="mt-3 text-xs text-indigo-400 hover:underline flex items-center space-x-1 font-medium p-1">
+            <button type="button" onclick="atualizarContaBancaria()" class="mt-3 text-xs text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 font-medium active:bg-indigo-500/20 transition">
                 <i class="fa-regular fa-pen-to-square"></i>
                 <span>Atualizar Conta</span>
             </button>
@@ -171,19 +172,19 @@
             
             <!-- Barra de Abas Horizontal -->
             <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-2">
-                <button onclick="mudarAba('fixas')" id="tabBtn-fixas" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-emerald-600 text-white transition flex items-center space-x-1.5 active:scale-95">
+                <button type="button" onclick="mudarAba('fixas')" id="tabBtn-fixas" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-emerald-600 text-white transition flex items-center space-x-1.5 active:scale-95">
                     <i class="fa-solid fa-thumbtack text-xs"></i><span>Dívidas Fixas</span>
                 </button>
-                <button onclick="mudarAba('variadas')" id="tabBtn-variadas" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5 active:scale-95">
+                <button type="button" onclick="mudarAba('variadas')" id="tabBtn-variadas" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 transition flex items-center space-x-1.5 active:scale-95">
                     <i class="fa-solid fa-shuffle text-xs"></i><span>Dívidas Variadas</span>
                 </button>
-                <button onclick="mudarAba('parcelado')" id="tabBtn-parcelado" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5 active:scale-95">
+                <button type="button" onclick="mudarAba('parcelado')" id="tabBtn-parcelado" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 transition flex items-center space-x-1.5 active:scale-95">
                     <i class="fa-solid fa-credit-card text-xs"></i><span>Cartão Parcelado</span>
                 </button>
-                <button onclick="mudarAba('avista')" id="tabBtn-avista" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5 active:scale-95">
+                <button type="button" onclick="mudarAba('avista')" id="tabBtn-avista" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 transition flex items-center space-x-1.5 active:scale-95">
                     <i class="fa-solid fa-bag-shopping text-xs"></i><span>Cartão À Vista</span>
                 </button>
-                <button onclick="mudarAba('fatura')" id="tabBtn-fatura" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5 active:scale-95">
+                <button type="button" onclick="mudarAba('fatura')" id="tabBtn-fatura" class="px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 transition flex items-center space-x-1.5 active:scale-95">
                     <i class="fa-solid fa-receipt text-xs"></i><span>Pagamento Fatura</span>
                 </button>
             </div>
@@ -200,7 +201,7 @@
         <div onclick="event.stopPropagation()" class="bg-cardBg border border-borderCol rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl relative">
             <div class="flex items-center justify-between">
                 <h3 id="modalTitulo" class="font-bold text-base text-slate-100">Nova Transação</h3>
-                <button onclick="fecharModal()" class="text-slate-400 hover:text-slate-100 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button type="button" onclick="fecharModal()" class="text-slate-400 hover:text-slate-100 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="modalFormCorpo" class="space-y-3">
                 <!-- Formulário dinâmico -->
@@ -255,6 +256,27 @@
             }
         }
 
+        // Funções para Controle do Modal (Exibição Garantida)
+        function abrirModalGarantido(titulo, htmlCorpo) {
+            document.getElementById('modalTitulo').innerText = titulo;
+            document.getElementById('modalFormCorpo').innerHTML = htmlCorpo;
+            const m = document.getElementById('modalTransacao');
+            m.classList.remove('hidden');
+            m.style.display = 'flex';
+        }
+
+        function fecharModal() {
+            const m = document.getElementById('modalTransacao');
+            m.classList.add('hidden');
+            m.style.display = 'none';
+        }
+
+        function fecharModalFora(event) {
+            if (event.target.id === 'modalTransacao') {
+                fecharModal();
+            }
+        }
+
         // Estado Global da Aplicação
         let estadoApp = {
             mesAtual: '2026-09',
@@ -265,7 +287,6 @@
             dadosMes: {}
         };
 
-        // Função de Sanitização e Auto-Correção dos Dados do Celular
         function sanitizarEstado() {
             if (!estadoApp || typeof estadoApp !== 'object') estadoApp = {};
             if (!estadoApp.mesAtual) estadoApp.mesAtual = '2026-09';
@@ -473,9 +494,7 @@
                 }
 
                 renderizarAbaAtiva();
-            } catch(e) {
-                console.error("Erro ao atualizar interface:", e);
-            }
+            } catch(e) {}
         }
 
         function mudarAba(aba) {
@@ -486,7 +505,7 @@
                     if(a === aba) {
                         btn.className = "px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-emerald-600 text-white transition flex items-center space-x-1.5 shadow-sm active:scale-95";
                     } else {
-                        btn.className = "px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center space-x-1.5 active:scale-95";
+                        btn.className = "px-3.5 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap bg-slate-800 text-slate-300 transition flex items-center space-x-1.5 active:scale-95";
                     }
                 }
             });
@@ -514,15 +533,13 @@
 
             const dataAtual = item.dataPagamento || new Date().toISOString().split('T')[0];
 
-            document.getElementById('modalTitulo').innerText = "Data do Pagamento";
-            document.getElementById('modalFormCorpo').innerHTML = `
+            abrirModalGarantido("Data do Pagamento", `
                 <div>
                     <label class="text-xs text-slate-400 block mb-1">Selecione a data em que você pagou:</label>
                     <input type="date" id="inputDataPagamentoDivida" value="${dataAtual}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                 </div>
-                <button onclick="salvarDataPagamentoItem('${tipo}', ${id})" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Data do Pagamento</button>
-            `;
-            document.getElementById('modalTransacao').classList.remove('hidden');
+                <button type="button" onclick="salvarDataPagamentoItem('${tipo}', ${id})" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Data do Pagamento</button>
+            `);
         }
 
         function salvarDataPagamentoItem(tipo, id) {
@@ -549,7 +566,7 @@
                 let html = `
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="font-bold text-sm text-slate-200">Dívidas Recorrentes / Fixas</h4>
-                        <button onclick="adicionarItem('fixas')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95">+ Adicionar</button>
+                        <button type="button" onclick="adicionarItem('fixas')" class="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95">+ Adicionar</button>
                     </div>
                     <div class="space-y-2">
                 `;
@@ -564,7 +581,7 @@
                         html += `
                             <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border ${estaPago ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-slate-700/50'} transition">
                                 <div class="flex items-center space-x-3">
-                                    <button onclick="toggleStatusPago('fixas', ${item.id})" class="w-7 h-7 rounded-lg border ${estaPago ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-600 bg-slate-900 text-slate-400'} flex items-center justify-center transition active:scale-95 shrink-0">
+                                    <button type="button" onclick="toggleStatusPago('fixas', ${item.id})" class="w-7 h-7 rounded-lg border ${estaPago ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-600 bg-slate-900 text-slate-400'} flex items-center justify-center transition active:scale-95 shrink-0">
                                         ${estaPago ? '<i class="fa-solid fa-check text-xs"></i>' : '<i class="fa-regular fa-circle text-xs"></i>'}
                                     </button>
                                     <div>
@@ -572,7 +589,7 @@
                                         <p class="text-[10px] text-slate-400">
                                             Venc: ${formatarDataBR(item.vencimento)}
                                             ${estaPago 
-                                                ? `• <button onclick="editarDataPagamentoItem('fixas', ${item.id})" class="text-emerald-400 font-semibold hover:underline"><i class="fa-regular fa-calendar-check mr-0.5"></i> Pago em: ${dataPagTxt}</button>` 
+                                                ? `• <button type="button" onclick="editarDataPagamentoItem('fixas', ${item.id})" class="text-emerald-400 font-semibold"><i class="fa-regular fa-calendar-check mr-0.5"></i> Pago em: ${dataPagTxt}</button>` 
                                                 : '• <span class="text-rose-400 font-semibold">Pendente</span>'
                                             }
                                         </p>
@@ -580,7 +597,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3 shrink-0">
                                     <span class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
-                                    <button onclick="removerItem('fixas', ${item.id})" class="text-slate-500 hover:text-rose-400 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <button type="button" onclick="removerItem('fixas', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -592,7 +609,7 @@
                 let html = `
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="font-bold text-sm text-slate-200">Dívidas Variadas / Imprevistos</h4>
-                        <button onclick="adicionarItem('variadas')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95">+ Adicionar</button>
+                        <button type="button" onclick="adicionarItem('variadas')" class="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95">+ Adicionar</button>
                     </div>
                     <div class="space-y-2">
                 `;
@@ -607,7 +624,7 @@
                         html += `
                             <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border ${estaPago ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-slate-700/50'} transition">
                                 <div class="flex items-center space-x-3">
-                                    <button onclick="toggleStatusPago('variadas', ${item.id})" class="w-7 h-7 rounded-lg border ${estaPago ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-600 bg-slate-900 text-slate-400'} flex items-center justify-center transition active:scale-95 shrink-0">
+                                    <button type="button" onclick="toggleStatusPago('variadas', ${item.id})" class="w-7 h-7 rounded-lg border ${estaPago ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-600 bg-slate-900 text-slate-400'} flex items-center justify-center transition active:scale-95 shrink-0">
                                         ${estaPago ? '<i class="fa-solid fa-check text-xs"></i>' : '<i class="fa-regular fa-circle text-xs"></i>'}
                                     </button>
                                     <div>
@@ -615,7 +632,7 @@
                                         <p class="text-[10px] text-slate-400">
                                             Venc: ${formatarDataBR(item.vencimento)}
                                             ${estaPago 
-                                                ? `• <button onclick="editarDataPagamentoItem('variadas', ${item.id})" class="text-emerald-400 font-semibold hover:underline"><i class="fa-regular fa-calendar-check mr-0.5"></i> Pago em: ${dataPagTxt}</button>` 
+                                                ? `• <button type="button" onclick="editarDataPagamentoItem('variadas', ${item.id})" class="text-emerald-400 font-semibold"><i class="fa-regular fa-calendar-check mr-0.5"></i> Pago em: ${dataPagTxt}</button>` 
                                                 : '• <span class="text-rose-400 font-semibold">Pendente</span>'
                                             }
                                         </p>
@@ -623,7 +640,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3 shrink-0">
                                     <span class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
-                                    <button onclick="removerItem('variadas', ${item.id})" class="text-slate-500 hover:text-rose-400 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <button type="button" onclick="removerItem('variadas', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -635,7 +652,7 @@
                 let html = `
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="font-bold text-sm text-slate-200">Cartão de Crédito - Parcelamentos</h4>
-                        <button onclick="adicionarItem('parcelado')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95">+ Nova Parcela</button>
+                        <button type="button" onclick="adicionarItem('parcelado')" class="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95">+ Nova Parcela</button>
                     </div>
                     <div class="space-y-2">
                 `;
@@ -652,7 +669,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valorParcela)}</span>
-                                    <button onclick="removerItem('parcelado', ${item.id})" class="text-slate-500 hover:text-rose-400 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <button type="button" onclick="removerItem('parcelado', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -664,7 +681,7 @@
                 let html = `
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="font-bold text-sm text-slate-200">Cartão de Crédito - Compras À Vista</h4>
-                        <button onclick="adicionarItem('avista')" class="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95">+ Nova Compra</button>
+                        <button type="button" onclick="adicionarItem('avista')" class="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95">+ Nova Compra</button>
                     </div>
                     <div class="space-y-2">
                 `;
@@ -681,7 +698,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valor)}</span>
-                                    <button onclick="removerItem('avista', ${item.id})" class="text-slate-500 hover:text-rose-400 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <button type="button" onclick="removerItem('avista', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -713,7 +730,7 @@
                             <label class="text-xs text-slate-300 font-medium">Data em que a fatura foi paga:</label>
                             <input type="date" id="inputDataPagoFatura" value="${dataPag}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                         </div>
-                        <button onclick="salvarPagamentoFatura()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95">Atualizar Pagamento da Fatura</button>
+                        <button type="button" onclick="salvarPagamentoFatura()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95">Atualizar Pagamento da Fatura</button>
                         <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
                             <span class="text-slate-400">Saldo Devedor Restante na Fatura:</span>
                             <span class="font-bold ${saldoDevedor > 0 ? 'text-rose-400' : 'text-emerald-400'}">${formatarMoeda(saldoDevedor)}</span>
@@ -724,16 +741,14 @@
         }
 
         function editarFechamentoCartao() {
-            document.getElementById('modalTitulo').innerText = "Dia de Fechamento do Cartão";
-            document.getElementById('modalFormCorpo').innerHTML = `
+            abrirModalGarantido("Dia de Fechamento do Cartão", `
                 <div>
                     <label class="text-xs text-slate-400 block mb-1">Dia do mês em que a fatura fecha (1 a 31):</label>
                     <input type="number" min="1" max="31" id="inputDiaFechamento" value="${estadoApp.diaFechamentoCartao}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                 </div>
                 <p class="text-[11px] text-slate-400 mt-1">Exemplo: Se o fechamento for dia 25, compras do dia 26 em diante virão na próxima fatura.</p>
-                <button onclick="salvarFechamentoCartao()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Alteração</button>
-            `;
-            document.getElementById('modalTransacao').classList.remove('hidden');
+                <button type="button" onclick="salvarFechamentoCartao()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Alteração</button>
+            `);
         }
 
         function salvarFechamentoCartao() {
@@ -752,16 +767,14 @@
             const dados = estadoApp.dadosMes[estadoApp.mesAtual] || {};
             const rendaAtualMes = typeof dados.renda === 'number' ? dados.renda : estadoApp.rendaPadrao;
             
-            document.getElementById('modalTitulo').innerText = "Editar Renda deste Mês";
-            document.getElementById('modalFormCorpo').innerHTML = `
+            abrirModalGarantido("Editar Renda deste Mês", `
                 <div>
                     <label class="text-xs text-slate-400">Salário + Extras do Mês (R$)</label>
                     <input type="number" step="0.01" id="valRendaInput" value="${rendaAtualMes}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
                 </div>
                 <p class="text-[10px] text-emerald-400 mt-1">Esta alteração afetará apenas o mês ativo (${estadoApp.mesAtual}).</p>
-                <button onclick="confirmarEdicaoRenda()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Renda</button>
-            `;
-            document.getElementById('modalTransacao').classList.remove('hidden');
+                <button type="button" onclick="confirmarEdicaoRenda()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Renda</button>
+            `);
         }
 
         function confirmarEdicaoRenda() {
@@ -775,15 +788,13 @@
         }
 
         function atualizarContaBancaria() {
-            document.getElementById('modalTitulo').innerText = "Atualizar Saldo em Conta";
-            document.getElementById('modalFormCorpo').innerHTML = `
+            abrirModalGarantido("Atualizar Saldo em Conta", `
                 <div>
                     <label class="text-xs text-slate-400">Saldo Atual em Conta (R$)</label>
                     <input type="number" step="0.01" id="valContaInput" value="${estadoApp.contaBancaria}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
                 </div>
-                <button onclick="confirmarAtualizacaoConta()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Saldo</button>
-            `;
-            document.getElementById('modalTransacao').classList.remove('hidden');
+                <button type="button" onclick="confirmarAtualizacaoConta()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Saldo</button>
+            `);
         }
 
         function confirmarAtualizacaoConta() {
@@ -794,35 +805,33 @@
             atualizarInterface();
         }
 
-        // Botão + Nova Transação (Menu)
+        // Botão + Nova Transação (Menu principal de escolha)
         function abrirModalTransacao() {
-            document.getElementById('modalTitulo').innerText = "Selecione o Tipo de Dívida";
-            document.getElementById('modalFormCorpo').innerHTML = `
+            abrirModalGarantido("Selecione o Tipo de Dívida", `
                 <p class="text-xs text-slate-400 mb-2">Qual tipo de lançamento deseja cadastrar?</p>
                 <div class="grid grid-cols-1 gap-2.5">
-                    <button onclick="adicionarItem('fixas')" class="bg-slate-800 hover:bg-slate-700 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
+                    <button type="button" onclick="adicionarItem('fixas')" class="bg-slate-800 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
                         <span class="text-slate-200">📌 Dívida Recorrente / Fixa</span>
                         <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
                     </button>
-                    <button onclick="adicionarItem('variadas')" class="bg-slate-800 hover:bg-slate-700 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
+                    <button type="button" onclick="adicionarItem('variadas')" class="bg-slate-800 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
                         <span class="text-slate-200">🔀 Dívida Variada / Imprevisto</span>
                         <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
                     </button>
-                    <button onclick="adicionarItem('avista')" class="bg-slate-800 hover:bg-slate-700 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
+                    <button type="button" onclick="adicionarItem('avista')" class="bg-slate-800 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
                         <span class="text-slate-200">🛍️ Cartão de Crédito À Vista</span>
                         <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
                     </button>
-                    <button onclick="adicionarItem('parcelado')" class="bg-slate-800 hover:bg-slate-700 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
+                    <button type="button" onclick="adicionarItem('parcelado')" class="bg-slate-800 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
                         <span class="text-slate-200">💳 Cartão de Crédito Parcelado</span>
                         <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
                     </button>
-                    <button onclick="adicionarItem('gastoConta')" class="bg-slate-800 hover:bg-slate-700 p-3.5 rounded-xl border border-slate-700 text-xs font-semibold text-left flex items-center justify-between transition border-indigo-500/30 active:scale-98">
+                    <button type="button" onclick="adicionarItem('gastoConta')" class="bg-slate-800 p-3.5 rounded-xl border border-indigo-500/30 text-xs font-semibold text-left flex items-center justify-between transition active:scale-98">
                         <span class="text-indigo-300">🏦 Gasto na Conta Bancária (Débito/Pix)</span>
                         <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
                     </button>
                 </div>
-            `;
-            document.getElementById('modalTransacao').classList.remove('hidden');
+            `);
         }
 
         function adicionarItem(tipo) {
@@ -833,7 +842,6 @@
             if(tipo === 'parcelado') titulo = 'Nova Compra no Cartão (Parcelado)';
             if(tipo === 'gastoConta') titulo = 'Gasto na Conta Bancária';
 
-            document.getElementById('modalTitulo').innerText = titulo;
             let html = '';
             const hoje = new Date().toISOString().split('T')[0];
 
@@ -866,9 +874,9 @@
                     <p class="text-[10px] text-amber-400">⚠️ Este valor será descontado imediatamente da sua Conta Bancária (Saldo Atual).</p>
                 `;
             }
-            html += `<button onclick="salvarNovoItem('${tipo}')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Item</button>`;
-            document.getElementById('modalFormCorpo').innerHTML = html;
-            document.getElementById('modalTransacao').classList.remove('hidden');
+            html += `<button type="button" onclick="salvarNovoItem('${tipo}')" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Salvar Item</button>`;
+            
+            abrirModalGarantido(titulo, html);
         }
 
         function salvarNovoItem(tipo) {
@@ -975,36 +983,24 @@
             alert('Pagamento de fatura atualizado com sucesso!');
         }
 
-        function fecharModal() {
-            document.getElementById('modalTransacao').classList.add('hidden');
-        }
-
-        function fecharModalFora(event) {
-            if (event.target.id === 'modalTransacao') {
-                fecharModal();
-            }
-        }
-
         function abrirBackupModal() {
-            document.getElementById('modalTitulo').innerText = "Backup e Segurança";
-            document.getElementById('modalFormCorpo').innerHTML = `
+            abrirModalGarantido("Backup e Segurança", `
                 <div class="space-y-3">
                     <p class="text-xs text-slate-400">Exporte ou importe seus dados para garantir a segurança das suas informações financeiras.</p>
-                    <button onclick="exportarDados()" class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-2.5 rounded-xl text-xs border border-slate-700 transition flex items-center justify-center space-x-2 active:scale-95">
+                    <button type="button" onclick="exportarDados()" class="w-full bg-slate-800 text-emerald-400 font-bold py-2.5 rounded-xl text-xs border border-slate-700 transition flex items-center justify-center space-x-2 active:scale-95">
                         <i class="fa-solid fa-download"></i>
                         <span>Exportar Backup (JSON)</span>
                     </button>
                     <div class="border-t border-slate-800 pt-2">
                         <label class="text-xs text-slate-400 block mb-1">Restaurar do arquivo:</label>
                         <input type="file" id="importFileInput" accept=".json" class="w-full text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-xl p-2">
-                        <button onclick="importarDados()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs mt-2 transition flex items-center justify-center space-x-2 active:scale-95">
+                        <button type="button" onclick="importarDados()" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs mt-2 transition flex items-center justify-center space-x-2 active:scale-95">
                             <i class="fa-solid fa-upload"></i>
                             <span>Importar Backup</span>
                         </button>
                     </div>
                 </div>
-            `;
-            document.getElementById('modalTransacao').classList.remove('hidden');
+            `);
         }
 
         function exportarDados() {
@@ -1049,7 +1045,7 @@
             if (e.key === 'Escape') fecharModal();
         });
 
-        // Garantia de execução no mobile
+        // Inicialização Garantida em Dispositivos Móveis
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', carregarDados);
         } else {
