@@ -312,6 +312,9 @@
             dadosMes: {}
         };
 
+        // Variável temporária para armazenar dados em fluxo de edição
+        let edicaoTemp = null;
+
         function sanitizarEstado() {
             if (!estadoApp || typeof estadoApp !== 'object') estadoApp = {};
             if (!estadoApp.mesAtual) estadoApp.mesAtual = '2026-09';
@@ -394,12 +397,17 @@
                     const ultimoMes = meses[meses.length - 1];
                     const dUltimo = estadoApp.dadosMes[ultimoMes];
                     if (dUltimo && Array.isArray(dUltimo.fixas)) {
-                        fixasAnteriores = dUltimo.fixas.map(f => ({
-                            ...f, 
-                            id: Date.now() + Math.floor(Math.random() * 1000),
-                            pago: false,
-                            dataPagamento: ''
-                        }));
+                        fixasAnteriores = dUltimo.fixas.map(f => {
+                            const diaVenc = (f.vencimento && f.vencimento.includes('-')) ? f.vencimento.split('-')[2] : '05';
+                            const [anoNovo, mesNovo] = mesKey.split('-');
+                            return {
+                                ...f, 
+                                id: Date.now() + Math.floor(Math.random() * 100000),
+                                vencimento: `${anoNovo}-${mesNovo}-${diaVenc}`,
+                                pago: false,
+                                dataPagamento: ''
+                            };
+                        });
                     }
                     if(dUltimo && typeof dUltimo.renda === 'number') {
                         rendaAnterior = dUltimo.renda;
@@ -647,6 +655,215 @@
             }
         }
 
+        // FUNÇÃO DE EDIÇÃO GERAL PARA QUALQUER LANÇAMENTO (CANETINHA)
+        function editarItem(tipo, id) {
+            const dados = estadoApp.dadosMes[estadoApp.mesAtual];
+            const chaveTipo = (tipo === 'gastoConta') ? 'gastosConta' : tipo;
+            if (!dados || !dados[chaveTipo]) return;
+
+            const item = dados[chaveTipo].find(i => i.id === id);
+            if (!item) return;
+
+            let titulo = "Editar Lançamento";
+            let html = "";
+
+            if (tipo === 'fixas' || tipo === 'variadas') {
+                titulo = tipo === 'fixas' ? "Editar Dívida Fixa" : "Editar Dívida Variada";
+                html = `
+                    <div><label class="text-xs text-slate-400">Descrição</label><input type="text" id="editDesc" value="${item.descricao || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Vencimento</label><input type="date" id="editVenc" value="${item.vencimento || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Valor (R$)</label><input type="number" step="0.01" id="editVal" value="${item.valor || 0}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                `;
+            } else if (tipo === 'parcelado') {
+                titulo = "Editar Parcela do Cartão";
+                html = `
+                    <div><label class="text-xs text-slate-400">Estabelecimento / Parcela</label><input type="text" id="editEstab" value="${item.estabelecimento || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Data da Compra</label><input type="date" id="editCompra" value="${item.compra || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Valor da Parcela (R$)</label><input type="number" step="0.01" id="editVal" value="${item.valorParcela || 0}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                `;
+            } else if (tipo === 'avista') {
+                titulo = "Editar Compra À Vista";
+                html = `
+                    <div><label class="text-xs text-slate-400">Estabelecimento</label><input type="text" id="editEstab" value="${item.estabelecimento || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Data da Compra</label><input type="date" id="editCompra" value="${item.data || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Valor (R$)</label><input type="number" step="0.01" id="editVal" value="${item.valor || 0}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                `;
+            } else if (tipo === 'gastoConta' || tipo === 'gastosConta') {
+                titulo = "Editar Gasto da Conta Bancária";
+                html = `
+                    <div><label class="text-xs text-slate-400">Descrição do Gasto</label><input type="text" id="editDesc" value="${item.descricao || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Data do Gasto</label><input type="date" id="editVenc" value="${item.data || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                    <div><label class="text-xs text-slate-400">Valor (R$)</label><input type="number" step="0.01" id="editVal" value="${item.valor || 0}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
+                `;
+            }
+
+            html += `<button type="button" onclick="salvarEdicaoItem('${tipo}', ${id})" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-3 transition active:scale-95">Salvar Alterações</button>`;
+
+            abrirModalGarantido(titulo, html);
+        }
+
+        // SALVAMENTO DA EDIÇÃO COM OPÇÃO DE ESCOPO (SOMENTE ESTE MÊS OU MESES SEGUINTES)
+        function salvarEdicaoItem(tipo, id) {
+            const dados = estadoApp.dadosMes[estadoApp.mesAtual];
+            const chaveTipo = (tipo === 'gastoConta') ? 'gastosConta' : tipo;
+            if (!dados || !dados[chaveTipo]) return;
+
+            const item = dados[chaveTipo].find(i => i.id === id);
+            if (!item) return;
+
+            let dadosNovos = {};
+            const nomeBaseOriginal = (item.descricao || item.estabelecimento || '').replace(/\s*\(\d+\/\d+\)$/, '').trim();
+
+            if (tipo === 'fixas' || tipo === 'variadas') {
+                const desc = document.getElementById('editDesc').value.trim();
+                const venc = document.getElementById('editVenc').value;
+                const val = parseFloat(document.getElementById('editVal').value) || 0;
+                if (!desc) { alert("Informe uma descrição!"); return; }
+                dadosNovos = { descricao: desc, vencimento: venc, valor: val };
+
+            } else if (tipo === 'parcelado') {
+                const estab = document.getElementById('editEstab').value.trim();
+                const compra = document.getElementById('editCompra').value;
+                const val = parseFloat(document.getElementById('editVal').value) || 0;
+                if (!estab) { alert("Informe o estabelecimento!"); return; }
+                dadosNovos = { estabelecimento: estab, compra: compra, valorParcela: val };
+
+            } else if (tipo === 'avista') {
+                const estab = document.getElementById('editEstab').value.trim();
+                const dataCompra = document.getElementById('editCompra').value;
+                const val = parseFloat(document.getElementById('editVal').value) || 0;
+                if (!estab) { alert("Informe o estabelecimento!"); return; }
+                dadosNovos = { estabelecimento: estab, data: dataCompra, valor: val };
+
+            } else if (tipo === 'gastoConta' || tipo === 'gastosConta') {
+                const desc = document.getElementById('editDesc').value.trim();
+                const dataGasto = document.getElementById('editVenc').value;
+                const val = parseFloat(document.getElementById('editVal').value) || 0;
+                if (!desc) { alert("Informe uma descrição!"); return; }
+                dadosNovos = { descricao: desc, data: dataGasto, valor: val };
+            }
+
+            edicaoTemp = {
+                tipo,
+                idTarget: id,
+                dadosNovos,
+                nomeBaseOriginal
+            };
+
+            solicitarEscopoEdicao();
+        }
+
+        function solicitarEscopoEdicao() {
+            if (!edicaoTemp) return;
+            const mesFormatado = document.getElementById('displayMesAno').innerText;
+            const nomeExibicao = edicaoTemp.dadosNovos.descricao || edicaoTemp.dadosNovos.estabelecimento || 'Este lançamento';
+
+            abrirModalGarantido("Confirmar Alteração", `
+                <div class="space-y-3">
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60">
+                        <p class="text-[11px] text-slate-400">Lançamento editado:</p>
+                        <p class="text-sm font-bold text-slate-100 mt-0.5">${nomeExibicao}</p>
+                    </div>
+
+                    <p class="text-xs text-slate-300 font-medium">Onde você deseja aplicar estas alterações?</p>
+
+                    <div class="space-y-2">
+                        <button type="button" onclick="executarEdicao('apenas_este')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-xs font-semibold text-left transition active:scale-98 flex items-center justify-between">
+                            <div>
+                                <span class="text-slate-100 block">🗓️ Alterar Apenas no Mês Ativo</span>
+                                <span class="text-[10px] text-slate-400 font-normal">Aplica as alterações somente em ${mesFormatado}</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                        </button>
+
+                        <button type="button" onclick="executarEdicao('este_e_futuros')" class="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-emerald-500/40 text-xs font-semibold text-left transition active:scale-98 flex items-center justify-between">
+                            <div>
+                                <span class="text-emerald-400 block">⏩ Estender aos Meses Seguintes</span>
+                                <span class="text-[10px] text-slate-400 font-normal">Aplica em ${mesFormatado} e replica nos meses futuros</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function executarEdicao(escopo) {
+            if (!edicaoTemp) return;
+            const { tipo, idTarget, dadosNovos, nomeBaseOriginal } = edicaoTemp;
+            const mesAtualKey = estadoApp.mesAtual;
+            const chaveTipo = (tipo === 'gastoConta') ? 'gastosConta' : tipo;
+
+            let novoDia = null;
+            const dataReferencia = dadosNovos.vencimento || dadosNovos.compra || dadosNovos.data;
+            if (dataReferencia && dataReferencia.includes('-')) {
+                novoDia = dataReferencia.split('-')[2];
+            }
+
+            Object.keys(estadoApp.dadosMes).forEach(mesKey => {
+                const dadosDoMes = estadoApp.dadosMes[mesKey];
+                if (!dadosDoMes || !Array.isArray(dadosDoMes[chaveTipo])) return;
+
+                if (escopo === 'apenas_este' && mesKey !== mesAtualKey) return;
+                if (escopo === 'este_e_futuros' && mesKey < mesAtualKey) return;
+
+                if (mesKey === mesAtualKey) {
+                    const item = dadosDoMes[chaveTipo].find(i => i.id === idTarget);
+                    if (item) {
+                        if (chaveTipo === 'gastosConta') {
+                            const valorAntigo = item.valor || 0;
+                            const diferenca = (dadosNovos.valor || 0) - valorAntigo;
+                            estadoApp.contaBancaria -= diferenca;
+                        }
+                        Object.assign(item, dadosNovos);
+                    }
+                } else if (escopo === 'este_e_futuros' && mesKey > mesAtualKey) {
+                    dadosDoMes[chaveTipo].forEach(item => {
+                        const nomeItem = item.descricao || item.estabelecimento || '';
+                        const nomeBaseItem = nomeItem.replace(/\s*\(\d+\/\d+\)$/, '').trim();
+
+                        if (nomeBaseItem.toLowerCase() === nomeBaseOriginal.toLowerCase()) {
+                            if (chaveTipo === 'fixas' || chaveTipo === 'variadas') {
+                                item.descricao = dadosNovos.descricao;
+                                item.valor = dadosNovos.valor;
+                                if (novoDia && item.vencimento && item.vencimento.includes('-')) {
+                                    const [a, m] = item.vencimento.split('-');
+                                    item.vencimento = `${a}-${m}-${novoDia}`;
+                                }
+                            } else if (chaveTipo === 'parcelado') {
+                                const matchParcela = nomeItem.match(/\(\d+\/\d+\)$/);
+                                item.estabelecimento = matchParcela ? `${dadosNovos.estabelecimento} ${matchParcela[0]}` : dadosNovos.estabelecimento;
+                                item.valorParcela = dadosNovos.valorParcela;
+                                if (novoDia && item.compra && item.compra.includes('-')) {
+                                    const [a, m] = item.compra.split('-');
+                                    item.compra = `${a}-${m}-${novoDia}`;
+                                }
+                            } else if (chaveTipo === 'avista') {
+                                item.estabelecimento = dadosNovos.estabelecimento;
+                                item.valor = dadosNovos.valor;
+                                if (novoDia && item.data && item.data.includes('-')) {
+                                    const [a, m] = item.data.split('-');
+                                    item.data = `${a}-${m}-${novoDia}`;
+                                }
+                            } else if (chaveTipo === 'gastosConta') {
+                                item.descricao = dadosNovos.descricao;
+                                item.valor = dadosNovos.valor;
+                                if (novoDia && item.data && item.data.includes('-')) {
+                                    const [a, m] = item.data.split('-');
+                                    item.data = `${a}-${m}-${novoDia}`;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            edicaoTemp = null;
+            salvarStorage();
+            fecharModal();
+            atualizarInterface();
+        }
+
         // SISTEMA DE EXCLUSÃO INTELIGENTE DE TRÊS NÍVEIS
         function solicitarRemocaoItem(tipo, id) {
             const dados = estadoApp.dadosMes[estadoApp.mesAtual];
@@ -780,9 +997,10 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="flex items-center space-x-3 shrink-0">
-                                    <span class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
-                                    <button type="button" onclick="solicitarRemocaoItem('fixas', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                <div class="flex items-center space-x-2 shrink-0">
+                                    <span class="text-xs font-bold mr-1 ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
+                                    <button type="button" onclick="editarItem('fixas', ${item.id})" title="Editar" class="text-slate-400 hover:text-emerald-400 p-1.5 transition active:scale-95"><i class="fa-regular fa-pen-to-square text-xs"></i></button>
+                                    <button type="button" onclick="solicitarRemocaoItem('fixas', ${item.id})" title="Excluir" class="text-slate-500 hover:text-rose-400 p-1.5 transition active:scale-95"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -823,9 +1041,10 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="flex items-center space-x-3 shrink-0">
-                                    <span class="text-xs font-bold ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
-                                    <button type="button" onclick="solicitarRemocaoItem('variadas', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                <div class="flex items-center space-x-2 shrink-0">
+                                    <span class="text-xs font-bold mr-1 ${estaPago ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(item.valor)}</span>
+                                    <button type="button" onclick="editarItem('variadas', ${item.id})" title="Editar" class="text-slate-400 hover:text-emerald-400 p-1.5 transition active:scale-95"><i class="fa-regular fa-pen-to-square text-xs"></i></button>
+                                    <button type="button" onclick="solicitarRemocaoItem('variadas', ${item.id})" title="Excluir" class="text-slate-500 hover:text-rose-400 p-1.5 transition active:scale-95"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -852,9 +1071,10 @@
                                     <p class="text-xs font-bold text-slate-200">${item.estabelecimento}</p>
                                     <p class="text-[10px] text-slate-400">Data Compra: ${formatarDataBR(item.compra)}</p>
                                 </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valorParcela)}</span>
-                                    <button type="button" onclick="solicitarRemocaoItem('parcelado', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                <div class="flex items-center space-x-2 shrink-0">
+                                    <span class="text-xs font-bold mr-1 text-rose-400">${formatarMoeda(item.valorParcela)}</span>
+                                    <button type="button" onclick="editarItem('parcelado', ${item.id})" title="Editar" class="text-slate-400 hover:text-emerald-400 p-1.5 transition active:scale-95"><i class="fa-regular fa-pen-to-square text-xs"></i></button>
+                                    <button type="button" onclick="solicitarRemocaoItem('parcelado', ${item.id})" title="Excluir" class="text-slate-500 hover:text-rose-400 p-1.5 transition active:scale-95"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -881,9 +1101,10 @@
                                     <p class="text-xs font-bold text-slate-200">${item.estabelecimento}</p>
                                     <p class="text-[10px] text-slate-400">Data Compra: ${formatarDataBR(item.data)}</p>
                                 </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-xs font-bold text-rose-400">${formatarMoeda(item.valor)}</span>
-                                    <button type="button" onclick="solicitarRemocaoItem('avista', ${item.id})" class="text-slate-500 p-1 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                <div class="flex items-center space-x-2 shrink-0">
+                                    <span class="text-xs font-bold mr-1 text-rose-400">${formatarMoeda(item.valor)}</span>
+                                    <button type="button" onclick="editarItem('avista', ${item.id})" title="Editar" class="text-slate-400 hover:text-emerald-400 p-1.5 transition active:scale-95"><i class="fa-regular fa-pen-to-square text-xs"></i></button>
+                                    <button type="button" onclick="solicitarRemocaoItem('avista', ${item.id})" title="Excluir" class="text-slate-500 hover:text-rose-400 p-1.5 transition active:scale-95"><i class="fa-solid fa-trash-can text-xs"></i></button>
                                 </div>
                             </div>
                         `;
@@ -1036,6 +1257,9 @@
                     <div><label class="text-xs text-slate-400">Vencimento</label><input type="date" id="addVenc" value="${hoje}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                     <div><label class="text-xs text-slate-400">Valor (R$)</label><input type="number" step="0.01" id="addVal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
                 `;
+                if(tipo === 'fixas') {
+                    html += `<p class="text-[10px] text-emerald-400 mt-1">🔄 Dívidas fixas são registradas automaticamente neste mês e nos meses seguintes.</p>`;
+                }
             } else if(tipo === 'parcelado') {
                 html = `
                     <div><label class="text-xs text-slate-400">Estabelecimento</label><input type="text" id="addEstab" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 mt-1 focus:outline-none focus:border-emerald-500"></div>
@@ -1067,14 +1291,43 @@
         function salvarNovoItem(tipo) {
             const novoId = Date.now();
 
-            if(tipo === 'fixas' || tipo === 'variadas') {
+            if(tipo === 'fixas') {
+                const desc = document.getElementById('addDesc').value.trim();
+                const venc = document.getElementById('addVenc').value;
+                const val = parseFloat(document.getElementById('addVal').value) || 0;
+                if(!desc) { alert("Informe uma descrição!"); return; }
+
+                const diaVenc = (venc && venc.includes('-')) ? venc.split('-')[2] : '05';
+                const mesAtualKey = estadoApp.mesAtual;
+
+                // 1. Cadastra no mês ativo
+                const dadosMesAtual = estadoApp.dadosMes[mesAtualKey];
+                dadosMesAtual.fixas.push({ id: novoId, descricao: desc, vencimento: venc, valor: val, pago: false, dataPagamento: '' });
+
+                // 2. Replica automaticamente para todos os meses futuros já existentes na memória
+                Object.keys(estadoApp.dadosMes).forEach(mKey => {
+                    if (mKey > mesAtualKey) {
+                        const [anoF, mesF] = mKey.split('-');
+                        const vencFuturo = `${anoF}-${mesF}-${diaVenc}`;
+                        estadoApp.dadosMes[mKey].fixas.push({
+                            id: Date.now() + Math.floor(Math.random() * 100000),
+                            descricao: desc,
+                            vencimento: vencFuturo,
+                            valor: val,
+                            pago: false,
+                            dataPagamento: ''
+                        });
+                    }
+                });
+
+            } else if(tipo === 'variadas') {
                 const desc = document.getElementById('addDesc').value.trim();
                 const venc = document.getElementById('addVenc').value;
                 const val = parseFloat(document.getElementById('addVal').value) || 0;
                 if(!desc) { alert("Informe uma descrição!"); return; }
 
                 const dados = estadoApp.dadosMes[estadoApp.mesAtual];
-                dados[tipo].push({ id: novoId, descricao: desc, vencimento: venc, valor: val, pago: false, dataPagamento: '' });
+                dados.variadas.push({ id: novoId, descricao: desc, vencimento: venc, valor: val, pago: false, dataPagamento: '' });
 
             } else if(tipo === 'avista') {
                 const estab = document.getElementById('addEstab').value.trim();
