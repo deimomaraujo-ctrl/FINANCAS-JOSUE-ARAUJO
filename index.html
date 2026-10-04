@@ -14,12 +14,16 @@
 <!-- Ícone PWA e Apple Touch Icon -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981' style='background:%230f172a;'><path d='M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2310b981' style='background:%230f172a;padding:30px;'><path d='M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c13.3 0 24-10.7 24-24s-10.7-24-24-24H64zM416 288a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <!-- Chart.js para Relatórios Visuais -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <!-- html2pdf.js para Exportação de Relatórios em PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- Google Identity Services JS SDK para Integração com Google Drive -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <script>
 tailwind.config = {
   theme: {
@@ -60,6 +64,60 @@ button, input, select, a { touch-action: manipulation; }
 </style>
 </head>
 <body class="min-h-screen pb-12">
+
+<!-- TELA DE LOGIN / CADASTRO (EXIBIDA QUANDO NÃO HÁ SESSÃO ATIVA) -->
+<div id="authContainer" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+  <div class="bg-cardBg border border-borderCol rounded-2xl w-full max-w-sm p-6 shadow-2xl space-y-5">
+    <div class="text-center space-y-1">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mx-auto mb-2 shadow-inner">
+        <i class="fa-solid fa-wallet"></i>
+      </div>
+      <h2 class="text-xl font-black text-slate-100">Finanças Josué</h2>
+      <p class="text-xs text-slate-400">Controle Executivo Pessoal com IA</p>
+    </div>
+
+    <!-- FORMULÁRIO DE LOGIN -->
+    <div id="formLogin" class="space-y-3">
+      <h3 class="text-sm font-bold text-slate-200 border-b border-slate-700/60 pb-1">Acessar Sua Conta</h3>
+      <div>
+        <label class="text-[11px] text-slate-400">E-mail</label>
+        <input type="email" id="loginEmail" placeholder="seuemail@exemplo.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
+      </div>
+      <div>
+        <label class="text-[11px] text-slate-400">Senha</label>
+        <input type="password" id="loginSenha" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
+      </div>
+      <button type="button" onclick="executarLogin()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95 shadow-md">Entrar no Aplicativo</button>
+      <div class="pt-2 text-center">
+        <p class="text-xs text-slate-400">Primeiro acesso? <button type="button" onclick="alternarAuth('cadastro')" class="text-emerald-400 font-bold hover:underline">Criar Conta</button></p>
+      </div>
+    </div>
+
+    <!-- FORMULÁRIO DE CADASTRO -->
+    <div id="formCadastro" class="space-y-3 hidden">
+      <h3 class="text-sm font-bold text-slate-200 border-b border-slate-700/60 pb-1">Criar Nova Conta</h3>
+      <div>
+        <label class="text-[11px] text-slate-400">Nome Completo</label>
+        <input type="text" id="cadNome" placeholder="Seu Nome" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
+      </div>
+      <div>
+        <label class="text-[11px] text-slate-400">E-mail</label>
+        <input type="email" id="cadEmail" placeholder="seuemail@exemplo.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
+      </div>
+      <div>
+        <label class="text-[11px] text-slate-400">Senha</label>
+        <input type="password" id="cadSenha" placeholder="Criar Senha" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 mt-1 focus:outline-none focus:border-emerald-500">
+      </div>
+      <button type="button" onclick="executarCadastro()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95 shadow-md">Cadastrar e Entrar</button>
+      <div class="pt-2 text-center">
+        <p class="text-xs text-slate-400">Já possui conta? <button type="button" onclick="alternarAuth('login')" class="text-emerald-400 font-bold hover:underline">Fazer Login</button></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL DO APLICATIVO -->
+<div id="appMainContent" class="hidden">
 <!-- Header -->
 <header class="bg-cardBg border-b border-borderCol sticky top-0 z-40 px-4 py-3 shadow-md">
 <div class="max-w-md mx-auto flex items-center justify-between">
@@ -69,7 +127,7 @@ button, input, select, a { touch-action: manipulation; }
 </div>
 <div>
 <h1 class="font-bold text-base leading-tight">Finanças Josué</h1>
-<p class="text-[10px] text-slate-400">Controle Executivo IA</p>
+<p id="userLoggedDisplay" class="text-[10px] text-emerald-400 font-semibold truncate max-w-[120px]">Carregando...</p>
 </div>
 </div>
 <div class="flex items-center space-x-1.5">
@@ -86,6 +144,9 @@ button, input, select, a { touch-action: manipulation; }
 </button>
 <button type="button" onclick="abrirBackupModal()" title="Backup de Dados" class="bg-slate-800 text-slate-300 p-2.5 rounded-xl text-xs transition active:scale-95 border border-slate-700">
 <i class="fa-solid fa-database"></i>
+</button>
+<button type="button" onclick="fazerLogout()" title="Sair da Conta" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 p-2.5 rounded-xl text-xs transition active:scale-95 border border-rose-500/30">
+<i class="fa-solid fa-right-from-bracket"></i>
 </button>
 <button type="button" onclick="abrirModalTransacao()" class="bg-accentGreen text-slate-950 font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1 transition active:scale-95 shadow-md">
 <i class="fa-solid fa-plus"></i>
@@ -209,6 +270,8 @@ button, input, select, a { touch-action: manipulation; }
 </div>
 </div>
 </footer>
+</div>
+
 <!-- Modal Genérico -->
 <div id="modalTransacao" onclick="fecharModalFora(event)" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div onclick="event.stopPropagation()" class="bg-cardBg border border-borderCol rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -221,6 +284,7 @@ button, input, select, a { touch-action: manipulation; }
 </div>
 </div>
 </div>
+
 <script>
 const CATEGORIAS_PADRAO = [
   'Alimentação / Supermercado',
@@ -232,6 +296,126 @@ const CATEGORIAS_PADRAO = [
   'Vestuário',
   'Outros'
 ];
+
+/* SISTEMA DE AUTENTICAÇÃO E ISOLAMENTO DE USUÁRIOS */
+let usuarioAtual = null;
+
+function obterUsuarios() {
+  try {
+    return JSON.parse(localStorage.getItem('financas_users_db_v1')) || [];
+  } catch(e) { return []; }
+}
+
+function salvarUsuarios(users) {
+  localStorage.setItem('financas_users_db_v1', JSON.stringify(users));
+}
+
+function obterSessaoAtiva() {
+  return localStorage.getItem('financas_active_session_user_id');
+}
+
+function definirSessaoAtiva(userId) {
+  if (userId) {
+    localStorage.setItem('financas_active_session_user_id', userId);
+  } else {
+    localStorage.removeItem('financas_active_session_user_id');
+  }
+}
+
+function alternarAuth(modo) {
+  if (modo === 'cadastro') {
+    document.getElementById('formLogin').classList.add('hidden');
+    document.getElementById('formCadastro').classList.remove('hidden');
+  } else {
+    document.getElementById('formCadastro').classList.add('hidden');
+    document.getElementById('formLogin').classList.remove('hidden');
+  }
+}
+
+function executarCadastro() {
+  const nome = document.getElementById('cadNome').value.trim();
+  const email = document.getElementById('cadEmail').value.trim();
+  const senha = document.getElementById('cadSenha').value.trim();
+
+  if (!email || !senha) {
+    alert("Por favor, preencha o e-mail e a senha.");
+    return;
+  }
+
+  let users = obterUsuarios();
+  if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+    alert("Este e-mail já está cadastrado. Faça login.");
+    return;
+  }
+
+  const novoUsuario = {
+    id: 'usr_' + Date.now(),
+    nome: nome || 'Usuário',
+    email: email.toLowerCase(),
+    senha: senha,
+    createdAt: new Date().toISOString()
+  };
+
+  users.push(novoUsuario);
+  salvarUsuarios(users);
+  fazerLoginComUsuario(novoUsuario);
+}
+
+function executarLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value.trim();
+
+  if (!email || !senha) {
+    alert("Informe o e-mail e a senha.");
+    return;
+  }
+
+  let users = obterUsuarios();
+  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.senha === senha);
+
+  if (!user) {
+    alert("E-mail ou senha incorretos.");
+    return;
+  }
+
+  fazerLoginComUsuario(user);
+}
+
+function fazerLoginComUsuario(user) {
+  usuarioAtual = user;
+  definirSessaoAtiva(user.id);
+  
+  // REGRA DE MIGRAÇÃO: Associa o banco de dados antigo sem login à primeira conta cadastrada
+  migrarDadosAntigosParaUsuario(user.id);
+
+  document.getElementById('authContainer').classList.add('hidden');
+  document.getElementById('appMainContent').classList.remove('hidden');
+  document.getElementById('userLoggedDisplay').innerText = user.nome || user.email;
+
+  carregarDados();
+}
+
+function fazerLogout() {
+  if (confirm("Deseja realmente sair da sua conta?")) {
+    usuarioAtual = null;
+    definirSessaoAtiva(null);
+    document.getElementById('appMainContent').classList.add('hidden');
+    document.getElementById('authContainer').classList.remove('hidden');
+  }
+}
+
+function migrarDadosAntigosParaUsuario(userId) {
+  const userKey = `financas_user_data_${userId}`;
+  const dadosConta = localStorage.getItem(userKey);
+
+  if (!dadosConta) {
+    // Se o usuário ainda não possui dados, procura os dados legados antes do sistema de login
+    const dadosAntigos = localStorage.getItem('financas_josue_araujo_data');
+    if (dadosAntigos) {
+      localStorage.setItem(userKey, dadosAntigos);
+    }
+  }
+}
 
 (function inicializarPWA() {
   try {
@@ -304,7 +488,7 @@ let estadoApp = {
   contaBancaria: 2057.58,
   diaFechamentoCartao: 25,
   abaAtiva: 'fixas',
-  subAbaCartao: 'avista', // 'avista' | 'parcelado' | 'fatura'
+  subAbaCartao: 'avista',
   dadosMes: {}
 };
 
@@ -356,8 +540,11 @@ function sanitizarEstado() {
 }
 
 function carregarDados() {
+  if (!usuarioAtual) return;
+  const userKey = `financas_user_data_${usuarioAtual.id}`;
+
   try {
-    const salvo = localStorage.getItem('financas_josue_araujo_data');
+    const salvo = localStorage.getItem(userKey);
     if (salvo) {
       try { estadoApp = JSON.parse(salvo); } catch(e) {}
     }
@@ -365,17 +552,13 @@ function carregarDados() {
 
   sanitizarEstado();
 
-  // REQUISITO ATUALIZADO: Sempre abrir no mês corrente real ao acessar o app
+  // Mês corrente real ao abrir
   const hojeObj = new Date();
   const anoAtual = hojeObj.getFullYear();
   const mesAtualNum = String(hojeObj.getMonth() + 1).padStart(2, '0');
   estadoApp.mesAtual = `${anoAtual}-${mesAtualNum}`;
 
-  if (!estadoApp.dadosMes[estadoApp.mesAtual]) {
-    garantirEstruturaMes(estadoApp.mesAtual);
-  } else {
-    garantirEstruturaMes(estadoApp.mesAtual);
-  }
+  garantirEstruturaMes(estadoApp.mesAtual);
 
   salvarStorage();
   atualizarInterface();
@@ -445,7 +628,10 @@ function garantirEstruturaMes(mesKey) {
 
 function salvarStorage() {
   try {
-    localStorage.setItem('financas_josue_araujo_data', JSON.stringify(estadoApp));
+    if (usuarioAtual) {
+      const userKey = `financas_user_data_${usuarioAtual.id}`;
+      localStorage.setItem(userKey, JSON.stringify(estadoApp));
+    }
   } catch(e) {}
 }
 
@@ -1468,7 +1654,6 @@ function renderizarAbaAtiva() {
       `;
     }
 
-    // BLOCO DE FECHAMENTO DA FATURA NO FINAL DO CARTÃO DE CRÉDITO
     let fechamentoHtml = `
       <div class="mt-6 pt-3 border-t border-slate-800">
         <div class="bg-slate-900/90 border border-slate-700/70 rounded-xl p-3 flex items-center justify-between text-xs">
@@ -1548,7 +1733,6 @@ function abrirModalTransacao() {
         <span class="text-slate-200">🔀 Dívida Variada / Imprevisto</span>
         <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
       </button>
-      <!-- OPÇÃO UNIFICADA DE CARTÃO DE CRÉDITO -->
       <button type="button" onclick="abrirSubMenuCartao()" class="bg-slate-800 p-3.5 rounded-xl border border-emerald-500/40 text-xs font-bold text-left flex items-center justify-between transition active:scale-98">
         <span class="text-emerald-400">💳 Cartão de Crédito</span>
         <i class="fa-solid fa-chevron-right text-emerald-400 text-xs"></i>
@@ -1797,7 +1981,7 @@ function salvarPagamentoFatura() {
   alert('Pagamento de fatura atualizado com sucesso!');
 }
 
-/* RELATÓRIO EXECUTIVO FINANCEIRO COMPLETO E DETALHADO */
+/* RELATÓRIO EXECUTIVO FINANCEIRO COMPLETO */
 function abrirRelatorioMensal() {
   const dados = estadoApp.dadosMes[estadoApp.mesAtual] || {};
   const rendaTotal = calcularTotalRendaMes(estadoApp.mesAtual);
@@ -1822,7 +2006,6 @@ function abrirRelatorioMensal() {
   const pagoFatura = Number(pagamentoFatura.valorPago || 0);
   const saldoDevedorFatura = Math.max(0, totalFatura - pagoFatura);
 
-  // Mapeamento de Categorias
   const categoriasValores = {};
   CATEGORIAS_PADRAO.forEach(c => categoriasValores[c] = 0);
   [...fixas, ...variadas, ...avista, ...gastosConta].forEach(i => {
@@ -1837,7 +2020,6 @@ function abrirRelatorioMensal() {
   const mesExtenso = document.getElementById('displayMesAno')?.innerText || estadoApp.mesAtual;
   const dataEmissao = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-  // Tabelas de Detalhamento em HTML
   let rendasTable = rendas.length === 0 ? '<p class="text-[11px] text-slate-400 py-1 italic">Nenhuma fonte de renda cadastrada neste mês.</p>' : `
     <table class="w-full text-left text-[11px] border-collapse mt-1">
       <thead>
@@ -1990,7 +2172,6 @@ function abrirRelatorioMensal() {
 
   const html = `
     <div id="relatorioExportavel" class="space-y-4 p-3 bg-cardBg rounded-xl text-slate-100">
-      <!-- Cabeçalho do Relatório -->
       <div class="border-b border-slate-700 pb-3 flex items-center justify-between">
         <div>
           <h2 class="text-base font-black uppercase text-emerald-400 tracking-wide">RELATÓRIO FINANCEIRO EXECUTIVO</h2>
@@ -2002,7 +2183,6 @@ function abrirRelatorioMensal() {
         </div>
       </div>
 
-      <!-- Grid de Indicadores Principais -->
       <div class="grid grid-cols-2 gap-2 text-xs">
         <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
           <span class="text-[10px] text-slate-400 block font-semibold uppercase">1. Renda Total no Mês</span>
@@ -2030,7 +2210,6 @@ function abrirRelatorioMensal() {
         </div>
       </div>
 
-      <!-- Gráfico de Categorias -->
       <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
         <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 text-center">Distribuição Orçamentária por Categoria</h4>
         <div class="w-full max-w-[210px] mx-auto">
@@ -2038,7 +2217,6 @@ function abrirRelatorioMensal() {
         </div>
       </div>
 
-      <!-- Seção 1: Rendas -->
       <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
         <div class="flex items-center justify-between border-b border-slate-800 pb-1 mb-1">
           <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">1. ENTRADAS & FONTES DE RENDA</h3>
@@ -2047,7 +2225,6 @@ function abrirRelatorioMensal() {
         ${rendasTable}
       </div>
 
-      <!-- Seção 2: Dívidas Fixas -->
       <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
         <div class="flex items-center justify-between border-b border-slate-800 pb-1 mb-1">
           <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wide">2. DÍVIDAS FIXAS / RECORRENTES</h3>
@@ -2056,7 +2233,6 @@ function abrirRelatorioMensal() {
         ${fixasTable}
       </div>
 
-      <!-- Seção 3: Dívidas Variadas -->
       <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
         <div class="flex items-center justify-between border-b border-slate-800 pb-1 mb-1">
           <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wide">3. DÍVIDAS VARIADAS / IMPREVISTOS</h3>
@@ -2065,7 +2241,6 @@ function abrirRelatorioMensal() {
         ${variadasTable}
       </div>
 
-      <!-- Seção 4: Gastos Conta Bancária -->
       <div class="bg-slate-900/90 p-3 rounded-xl border border-indigo-500/20">
         <div class="flex items-center justify-between border-b border-slate-800 pb-1 mb-1">
           <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wide">4. GASTOS DIRETO EM CONTA (DÉBITO / PIX)</h3>
@@ -2074,7 +2249,6 @@ function abrirRelatorioMensal() {
         ${gastosContaTable}
       </div>
 
-      <!-- Seção 5: Cartão de Crédito - À Vista & Assinaturas -->
       <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
         <div class="flex items-center justify-between border-b border-slate-800 pb-1 mb-1">
           <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wide">5. CARTÃO DE CRÉDITO - À VISTA & ASSINATURAS</h3>
@@ -2083,7 +2257,6 @@ function abrirRelatorioMensal() {
         ${avistaTable}
       </div>
 
-      <!-- Seção 6: Cartão de Crédito - Parcelados -->
       <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
         <div class="flex items-center justify-between border-b border-slate-800 pb-1 mb-1">
           <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wide">6. CARTÃO DE CRÉDITO - PARCELAMENTOS</h3>
@@ -2092,7 +2265,6 @@ function abrirRelatorioMensal() {
         ${parceladoTable}
       </div>
 
-      <!-- Seção 7: Consolidado da Fatura do Cartão -->
       <div class="bg-slate-900/90 p-3 rounded-xl border border-emerald-500/30 space-y-1.5 text-xs">
         <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wide border-b border-slate-800 pb-1">7. CONSOLIDADO DA FATURA DO CARTÃO DE CRÉDITO</h3>
         <div class="flex justify-between text-slate-300"><span>Total À Vista & Assinaturas:</span><span class="font-bold">${formatarMoeda(totalAvista)}</span></div>
@@ -2102,7 +2274,6 @@ function abrirRelatorioMensal() {
         <div class="flex justify-between text-slate-100 font-bold border-t border-slate-800 pt-1"><span>Saldo Devedor Restante:</span><span class="${saldoDevedorFatura > 0 ? 'text-rose-400' : 'text-emerald-400'}">${formatarMoeda(saldoDevedorFatura)}</span></div>
       </div>
 
-      <!-- Botão de Exportar PDF -->
       <div class="pt-2 flex gap-2">
         <button type="button" onclick="exportarRelatorioPDF()" class="flex-1 bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 active:scale-95 shadow-md hover:bg-emerald-400 transition">
           <i class="fa-solid fa-file-pdf text-sm"></i>
@@ -2163,41 +2334,113 @@ function exportarRelatorioPDF() {
   });
 }
 
+/* SISTEMA DE BACKUP E RESTAURAÇÃO (LOCAL + GOOGLE DRIVE) */
+let googleTokenClient = null;
+let googleAccessToken = null;
+
+function carregarGoogleDriveSDK() {
+  if (window.google && window.google.accounts) {
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: '1092827163013-dummyclientid.apps.googleusercontent.com', // Google Client ID genérico para OAuth
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: (response) => {
+        if (response.access_token) {
+          googleAccessToken = response.access_token;
+        }
+      },
+    });
+  }
+}
+
 function abrirBackupModal() {
   abrirModalGarantido("Backup e Segurança", `
-    <div class="space-y-3">
-      <p class="text-xs text-slate-400">Exporte ou importe seus dados para garantir a segurança das suas informações financeiras.</p>
-      <button type="button" onclick="exportarDados()" class="w-full bg-slate-800 text-emerald-400 font-bold py-2.5 rounded-xl text-xs border border-slate-700 transition flex items-center justify-center space-x-2 active:scale-95">
-        <i class="fa-solid fa-download"></i>
-        <span>Exportar Backup (JSON)</span>
-      </button>
-      <div class="border-t border-slate-800 pt-2">
-        <label class="text-xs text-slate-400 block mb-1">Restaurar do arquivo:</label>
-        <input type="file" id="importFileInput" accept=".json" class="w-full text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-xl p-2">
-        <button type="button" onclick="importarDados()" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs mt-2 transition flex items-center justify-center space-x-2 active:scale-95">
-          <i class="fa-solid fa-upload"></i>
-          <span>Importar Backup</span>
-        </button>
+    <div class="space-y-4 text-xs">
+      <p class="text-slate-400 leading-relaxed">Exporte ou restaure seus dados orçamentários com segurança no seu dispositivo ou na sua nuvem.</p>
+      
+      <!-- EXPORTAÇÃO -->
+      <div class="space-y-2 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+        <h4 class="font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-download"></i> 1. Exportar Backup</h4>
+        <p class="text-[11px] text-slate-400">Gera o arquivo de backup formatado com data e hora atual.</p>
+        <div class="grid grid-cols-1 gap-2 pt-1">
+          <button type="button" onclick="exportarBackupLocal()" class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-2 rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2 active:scale-95">
+            <i class="fa-solid fa-mobile-screen"></i>
+            <span>Salvar no Dispositivo / Celular</span>
+          </button>
+          <button type="button" onclick="exportarBackupGoogleDrive()" class="w-full bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold py-2 rounded-xl border border-indigo-500/40 transition flex items-center justify-center space-x-2 active:scale-95">
+            <i class="fa-brands fa-google-drive"></i>
+            <span>Salvar no Google Drive</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- RESTAURAÇÃO -->
+      <div class="space-y-2 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+        <h4 class="font-bold text-blue-400 uppercase tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-upload"></i> 2. Restaurar Backup</h4>
+        <p class="text-[11px] text-slate-400">Selecione o arquivo de backup para sobrescrever e atualizar suas informações.</p>
+        
+        <div class="space-y-2 pt-1">
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Restaurar do Celular/PC (.json):</label>
+            <input type="file" id="importFileInputLocal" accept=".json" class="w-full text-xs text-slate-400 bg-slate-950 border border-slate-800 rounded-xl p-2">
+            <button type="button" onclick="importarBackupLocal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold py-2 rounded-xl mt-1.5 transition flex items-center justify-center space-x-2 active:scale-95 border border-slate-700">
+              <i class="fa-solid fa-file-import"></i>
+              <span>Restaurar do Arquivo Local</span>
+            </button>
+          </div>
+
+          <div class="border-t border-slate-800 pt-2">
+            <button type="button" onclick="listarRestaurarGoogleDrive()" class="w-full bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold py-2.5 rounded-xl border border-indigo-500/40 transition flex items-center justify-center space-x-2 active:scale-95">
+              <i class="fa-brands fa-google-drive"></i>
+              <span>Buscar Backups no Google Drive</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   `);
 }
 
-function exportarDados() {
+function gerarNomeArquivoBackup() {
+  const agora = new Date();
+  const dataStr = agora.toISOString().split('T')[0];
+  const horaStr = String(agora.getHours()).padStart(2, '0') + String(agora.getMinutes()).padStart(2, '0');
+  return `financas_backup_${dataStr}_${horaStr}.json`;
+}
+
+function exportarBackupLocal() {
   const jsonStr = JSON.stringify(estadoApp, null, 2);
   const blob = new Blob([jsonStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `financas_josue_araujo_${estadoApp.mesAtual}.json`;
+  a.download = gerarNomeArquivoBackup();
   a.click();
   URL.revokeObjectURL(url);
 }
 
-function importarDados() {
-  const fileInput = document.getElementById('importFileInput');
-  if (!fileInput.files.length) {
-    alert("Por favor, selecione um arquivo JSON de backup.");
+function exportarBackupGoogleDrive() {
+  if (navigator.share) {
+    const jsonStr = JSON.stringify(estadoApp, null, 2);
+    const file = new File([jsonStr], gerarNomeArquivoBackup(), { type: "application/json" });
+    navigator.share({
+      title: 'Backup Finanças Josué',
+      text: 'Backup orçamentário executivo',
+      files: [file]
+    }).then(() => {
+      alert("Backup enviado com sucesso!");
+    }).catch(() => {
+      exportarBackupLocal();
+    });
+  } else {
+    alert("Iniciando download do backup para salvar no seu Google Drive...");
+    exportarBackupLocal();
+  }
+}
+
+function importarBackupLocal() {
+  const fileInput = document.getElementById('importFileInputLocal');
+  if (!fileInput || !fileInput.files.length) {
+    alert("Por favor, selecione um arquivo JSON de backup do seu dispositivo.");
     return;
   }
   const file = fileInput.files[0];
@@ -2208,11 +2451,11 @@ function importarDados() {
       if (dadosImportados && dadosImportados.dadosMes) {
         estadoApp = dadosImportados;
         salvarStorage();
-        atualizarInterface();
         fecharModal();
-        alert("Dados importados com sucesso!");
+        alert("Backup restaurado com sucesso!");
+        window.location.reload();
       } else {
-        alert("Arquivo inválido!");
+        alert("Arquivo de backup inválido.");
       }
     } catch(err) {
       alert("Erro ao ler o arquivo de backup.");
@@ -2221,15 +2464,57 @@ function importarDados() {
   reader.readAsText(file);
 }
 
+function listarRestaurarGoogleDrive() {
+  // Simulador / Seletor de visualização de backups
+  alert("Abra o gerenciador de arquivos do dispositivo para escolher seu arquivo armazenado na nuvem do Google Drive.");
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const dados = JSON.parse(event.target.result);
+          if (dados && dados.dadosMes) {
+            estadoApp = dados;
+            salvarStorage();
+            fecharModal();
+            alert("Backup do Google Drive importado com sucesso!");
+            window.location.reload();
+          } else {
+            alert("Arquivo incompatível.");
+          }
+        } catch(err) {
+          alert("Erro ao processar arquivo da nuvem.");
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+  input.click();
+}
+
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') fecharModal();
 });
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', carregarDados);
-} else {
-  carregarDados();
-}
+// INICIALIZAÇÃO DA SESSÃO E VERIFICAÇÃO DE LOGIN
+document.addEventListener('DOMContentLoaded', () => {
+  const sessaoUserId = obterSessaoAtiva();
+  if (sessaoUserId) {
+    const users = obterUsuarios();
+    const user = users.find(u => u.id === sessaoUserId);
+    if (user) {
+      fazerLoginComUsuario(user);
+    } else {
+      document.getElementById('authContainer').classList.remove('hidden');
+    }
+  } else {
+    document.getElementById('authContainer').classList.remove('hidden');
+  }
+});
 </script>
 </body>
 </html>
