@@ -21,8 +21,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <!-- html2pdf.js para Exportação de Relatórios em PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<!-- Google Identity Services JS SDK para Integração com Google Drive -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
 tailwind.config = {
@@ -65,7 +63,7 @@ button, input, select, a { touch-action: manipulation; }
 </head>
 <body class="min-h-screen pb-12">
 
-<!-- TELA DE LOGIN / CADASTRO (EXIBIDA QUANDO NÃO HÁ SESSÃO ATIVA) -->
+<!-- TELA DE LOGIN / CADASTRO -->
 <div id="authContainer" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
   <div class="bg-cardBg border border-borderCol rounded-2xl w-full max-w-sm p-6 shadow-2xl space-y-5">
     <div class="text-center space-y-1">
@@ -300,6 +298,11 @@ const CATEGORIAS_PADRAO = [
 /* SISTEMA DE AUTENTICAÇÃO E ISOLAMENTO DE USUÁRIOS */
 let usuarioAtual = null;
 
+function getUserStorageKey(email) {
+  if (!email) return 'dados_financeiros_guest';
+  return 'dados_financeiros_' + email.toLowerCase().trim().replace(/[^a-z0-9@._-]/g, '_');
+}
+
 function obterUsuarios() {
   try {
     return JSON.parse(localStorage.getItem('financas_users_db_v1')) || [];
@@ -330,6 +333,20 @@ function alternarAuth(modo) {
     document.getElementById('formCadastro').classList.add('hidden');
     document.getElementById('formLogin').classList.remove('hidden');
   }
+}
+
+function criarEstadoVazio() {
+  const hoje = new Date();
+  const mesStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  return {
+    mesAtual: mesStr,
+    rendaPadrao: 0,
+    contaBancaria: 0,
+    diaFechamentoCartao: 25,
+    abaAtiva: 'fixas',
+    subAbaCartao: 'avista',
+    dadosMes: {}
+  };
 }
 
 function executarCadastro() {
@@ -384,9 +401,6 @@ function executarLogin() {
 function fazerLoginComUsuario(user) {
   usuarioAtual = user;
   definirSessaoAtiva(user.id);
-  
-  // REGRA DE MIGRAÇÃO: Associa o banco de dados antigo sem login à primeira conta cadastrada
-  migrarDadosAntigosParaUsuario(user.id);
 
   document.getElementById('authContainer').classList.add('hidden');
   document.getElementById('appMainContent').classList.remove('hidden');
@@ -399,21 +413,9 @@ function fazerLogout() {
   if (confirm("Deseja realmente sair da sua conta?")) {
     usuarioAtual = null;
     definirSessaoAtiva(null);
+    estadoApp = criarEstadoVazio();
     document.getElementById('appMainContent').classList.add('hidden');
     document.getElementById('authContainer').classList.remove('hidden');
-  }
-}
-
-function migrarDadosAntigosParaUsuario(userId) {
-  const userKey = `financas_user_data_${userId}`;
-  const dadosConta = localStorage.getItem(userKey);
-
-  if (!dadosConta) {
-    // Se o usuário ainda não possui dados, procura os dados legados antes do sistema de login
-    const dadosAntigos = localStorage.getItem('financas_josue_araujo_data');
-    if (dadosAntigos) {
-      localStorage.setItem(userKey, dadosAntigos);
-    }
   }
 }
 
@@ -482,16 +484,7 @@ function fecharModalFora(event) {
   }
 }
 
-let estadoApp = {
-  mesAtual: '2026-09',
-  rendaPadrao: 4833.63,
-  contaBancaria: 2057.58,
-  diaFechamentoCartao: 25,
-  abaAtiva: 'fixas',
-  subAbaCartao: 'avista',
-  dadosMes: {}
-};
-
+let estadoApp = criarEstadoVazio();
 let edicaoTemp = null;
 
 function getFechamentoCartaoMes(mesKey) {
@@ -503,10 +496,10 @@ function getFechamentoCartaoMes(mesKey) {
 }
 
 function sanitizarEstado() {
-  if (!estadoApp || typeof estadoApp !== 'object') estadoApp = {};
+  if (!estadoApp || typeof estadoApp !== 'object') estadoApp = criarEstadoVazio();
   if (!estadoApp.mesAtual) estadoApp.mesAtual = '2026-09';
-  if (typeof estadoApp.rendaPadrao !== 'number') estadoApp.rendaPadrao = 4833.63;
-  if (typeof estadoApp.contaBancaria !== 'number') estadoApp.contaBancaria = 2057.58;
+  if (typeof estadoApp.rendaPadrao !== 'number') estadoApp.rendaPadrao = 0;
+  if (typeof estadoApp.contaBancaria !== 'number') estadoApp.contaBancaria = 0;
   if (typeof estadoApp.diaFechamentoCartao !== 'number') estadoApp.diaFechamentoCartao = 25;
   if (!estadoApp.abaAtiva) estadoApp.abaAtiva = 'fixas';
   if (!estadoApp.subAbaCartao) estadoApp.subAbaCartao = 'avista';
@@ -515,10 +508,7 @@ function sanitizarEstado() {
   Object.keys(estadoApp.dadosMes).forEach(mesKey => {
     const d = estadoApp.dadosMes[mesKey];
     if (d && typeof d === 'object') {
-      if (!Array.isArray(d.rendas)) {
-        const valorLegado = (typeof d.renda === 'number') ? d.renda : estadoApp.rendaPadrao;
-        d.rendas = [{ id: 101, descricao: 'Salário Principal', origem: 'Empresa', valor: valorLegado }];
-      }
+      if (!Array.isArray(d.rendas)) d.rendas = [];
       if (typeof d.diaFechamentoCartao !== 'number') d.diaFechamentoCartao = estadoApp.diaFechamentoCartao;
       if (!Array.isArray(d.fixas)) d.fixas = [];
       if (!Array.isArray(d.variadas)) d.variadas = [];
@@ -540,15 +530,33 @@ function sanitizarEstado() {
 }
 
 function carregarDados() {
-  if (!usuarioAtual) return;
-  const userKey = `financas_user_data_${usuarioAtual.id}`;
+  if (!usuarioAtual || !usuarioAtual.email) return;
 
-  try {
-    const salvo = localStorage.getItem(userKey);
-    if (salvo) {
-      try { estadoApp = JSON.parse(salvo); } catch(e) {}
+  const userKey = getUserStorageKey(usuarioAtual.email);
+  const salvo = localStorage.getItem(userKey);
+
+  if (salvo) {
+    try {
+      estadoApp = JSON.parse(salvo);
+    } catch(e) {
+      estadoApp = criarEstadoVazio();
     }
-  } catch(e) {}
+  } else {
+    // Se for o primeiro usuário a se cadastrar e existir dados antigos anteriores ao sistema de login, migra para ele
+    const legacyData = localStorage.getItem('financas_josue_araujo_data');
+    const users = obterUsuarios();
+
+    if (legacyData && users.length <= 1) {
+      try {
+        estadoApp = JSON.parse(legacyData);
+      } catch(e) {
+        estadoApp = criarEstadoVazio();
+      }
+    } else {
+      // Para qualquer outro novo usuário, o painel inicia 100% limpo e zerado
+      estadoApp = criarEstadoVazio();
+    }
+  }
 
   sanitizarEstado();
 
@@ -569,7 +577,7 @@ function garantirEstruturaMes(mesKey) {
   if (!estadoApp.dadosMes[mesKey]) {
     let fixasAnteriores = [];
     let assinaturasAnteriores = [];
-    let rendasAnteriores = [{ id: 1, descricao: 'Salário Base', origem: 'Empresa', valor: estadoApp.rendaPadrao }];
+    let rendasAnteriores = estadoApp.rendaPadrao > 0 ? [{ id: 1, descricao: 'Salário Base', origem: 'Empresa', valor: estadoApp.rendaPadrao }] : [];
     let diaFechAnterior = estadoApp.diaFechamentoCartao;
 
     const meses = Object.keys(estadoApp.dadosMes).sort();
@@ -628,8 +636,8 @@ function garantirEstruturaMes(mesKey) {
 
 function salvarStorage() {
   try {
-    if (usuarioAtual) {
-      const userKey = `financas_user_data_${usuarioAtual.id}`;
+    if (usuarioAtual && usuarioAtual.email) {
+      const userKey = getUserStorageKey(usuarioAtual.email);
       localStorage.setItem(userKey, JSON.stringify(estadoApp));
     }
   } catch(e) {}
@@ -2335,23 +2343,6 @@ function exportarRelatorioPDF() {
 }
 
 /* SISTEMA DE BACKUP E RESTAURAÇÃO (LOCAL + GOOGLE DRIVE) */
-let googleTokenClient = null;
-let googleAccessToken = null;
-
-function carregarGoogleDriveSDK() {
-  if (window.google && window.google.accounts) {
-    googleTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: '1092827163013-dummyclientid.apps.googleusercontent.com', // Google Client ID genérico para OAuth
-      scope: 'https://www.googleapis.com/auth/drive.file',
-      callback: (response) => {
-        if (response.access_token) {
-          googleAccessToken = response.access_token;
-        }
-      },
-    });
-  }
-}
-
 function abrirBackupModal() {
   abrirModalGarantido("Backup e Segurança", `
     <div class="space-y-4 text-xs">
@@ -2389,9 +2380,9 @@ function abrirBackupModal() {
           </div>
 
           <div class="border-t border-slate-800 pt-2">
-            <button type="button" onclick="listarRestaurarGoogleDrive()" class="w-full bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold py-2.5 rounded-xl border border-indigo-500/40 transition flex items-center justify-center space-x-2 active:scale-95">
+            <button type="button" onclick="abrirRestaurarGoogleDriveModal()" class="w-full bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold py-2.5 rounded-xl border border-indigo-500/40 transition flex items-center justify-center space-x-2 active:scale-95">
               <i class="fa-brands fa-google-drive"></i>
-              <span>Buscar Backups no Google Drive</span>
+              <span>Restaurar do Google Drive</span>
             </button>
           </div>
         </div>
@@ -2419,22 +2410,41 @@ function exportarBackupLocal() {
 }
 
 function exportarBackupGoogleDrive() {
+  const fileName = gerarNomeArquivoBackup();
+  exportarBackupLocal(); // Baixa o arquivo para o dispositivo do usuário
+
   if (navigator.share) {
-    const jsonStr = JSON.stringify(estadoApp, null, 2);
-    const file = new File([jsonStr], gerarNomeArquivoBackup(), { type: "application/json" });
-    navigator.share({
-      title: 'Backup Finanças Josué',
-      text: 'Backup orçamentário executivo',
-      files: [file]
-    }).then(() => {
-      alert("Backup enviado com sucesso!");
-    }).catch(() => {
-      exportarBackupLocal();
-    });
-  } else {
-    alert("Iniciando download do backup para salvar no seu Google Drive...");
-    exportarBackupLocal();
+    try {
+      const jsonStr = JSON.stringify(estadoApp, null, 2);
+      const file = new File([jsonStr], fileName, { type: "application/json" });
+      navigator.share({
+        title: 'Backup Finanças',
+        text: 'Backup do sistema orçamentário',
+        files: [file]
+      }).catch(() => {});
+    } catch(e) {}
   }
+
+  abrirModalGarantido("Salvar no Google Drive", `
+    <div class="space-y-3 text-xs text-slate-300">
+      <div class="flex items-center space-x-2 text-emerald-400 font-bold text-sm">
+        <i class="fa-brands fa-google-drive text-xl"></i>
+        <span>Arquivo de Backup Gerado!</span>
+      </div>
+      <p class="text-slate-400 leading-relaxed">O arquivo <b class="text-slate-100">${fileName}</b> foi gerado e baixado para o seu aparelho.</p>
+      
+      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2 text-[11px]">
+        <p class="font-bold text-slate-200">Como salvar na nuvem do Google Drive:</p>
+        <ol class="list-decimal list-inside space-y-1.5 text-slate-400">
+          <li>Se a janela de compartilhamento do seu celular abriu, selecione o ícone do <b>Google Drive</b>.</li>
+          <li>Caso não tenha aberto, abra o app do <b>Google Drive</b> no seu celular ou computador.</li>
+          <li>Clique no botão <b>'+' (Novo) -> Fazer Upload</b> e selecione o arquivo <b>${fileName}</b> da sua pasta de Downloads.</li>
+        </ol>
+      </div>
+
+      <button type="button" onclick="fecharModal()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Entendido</button>
+    </div>
+  `);
 }
 
 function importarBackupLocal() {
@@ -2453,7 +2463,7 @@ function importarBackupLocal() {
         salvarStorage();
         fecharModal();
         alert("Backup restaurado com sucesso!");
-        window.location.reload();
+        atualizarInterface();
       } else {
         alert("Arquivo de backup inválido.");
       }
@@ -2464,36 +2474,59 @@ function importarBackupLocal() {
   reader.readAsText(file);
 }
 
-function listarRestaurarGoogleDrive() {
-  // Simulador / Seletor de visualização de backups
-  alert("Abra o gerenciador de arquivos do dispositivo para escolher seu arquivo armazenado na nuvem do Google Drive.");
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          const dados = JSON.parse(event.target.result);
-          if (dados && dados.dadosMes) {
-            estadoApp = dados;
-            salvarStorage();
-            fecharModal();
-            alert("Backup do Google Drive importado com sucesso!");
-            window.location.reload();
-          } else {
-            alert("Arquivo incompatível.");
-          }
-        } catch(err) {
-          alert("Erro ao processar arquivo da nuvem.");
-        }
-      };
-      reader.readAsText(file);
+function abrirRestaurarGoogleDriveModal() {
+  abrirModalGarantido("Restaurar do Google Drive", `
+    <div class="space-y-3 text-xs text-slate-300">
+      <div class="flex items-center space-x-2 text-indigo-400 font-bold text-sm">
+        <i class="fa-brands fa-google-drive text-xl"></i>
+        <span>Restaurar do Google Drive / Nuvem</span>
+      </div>
+      <p class="text-slate-400 leading-relaxed">Para restaurar um backup salvo na sua conta do Google Drive:</p>
+      
+      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2 text-[11px] text-slate-400">
+        <p class="font-bold text-slate-200">Instruções:</p>
+        <ol class="list-decimal list-inside space-y-1">
+          <li>Selecione o arquivo de backup baixado do seu Google Drive.</li>
+          <li>Clique no botão abaixo para escolher o arquivo <b>.json</b> com a data mais recente.</li>
+        </ol>
+      </div>
+
+      <div class="pt-2">
+        <input type="file" id="importFileInputDrive" accept=".json" class="w-full text-xs text-slate-400 bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+        <button type="button" onclick="executarImportacaoDrive()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs mt-3 transition active:scale-95 flex items-center justify-center space-x-2 shadow-md">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Confirmar e Restaurar Backup</span>
+        </button>
+      </div>
+    </div>
+  `);
+}
+
+function executarImportacaoDrive() {
+  const fileInput = document.getElementById('importFileInputDrive');
+  if (!fileInput || !fileInput.files.length) {
+    alert("Por favor, selecione um arquivo JSON de backup.");
+    return;
+  }
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const dadosImportados = JSON.parse(e.target.result);
+      if (dadosImportados && dadosImportados.dadosMes) {
+        estadoApp = dadosImportados;
+        salvarStorage();
+        fecharModal();
+        alert("Backup do Google Drive restaurado com sucesso!");
+        atualizarInterface();
+      } else {
+        alert("Arquivo de backup inválido ou incompatível.");
+      }
+    } catch(err) {
+      alert("Erro ao ler o arquivo de backup.");
     }
   };
-  input.click();
+  reader.readAsText(file);
 }
 
 document.addEventListener('keydown', function(e) {
