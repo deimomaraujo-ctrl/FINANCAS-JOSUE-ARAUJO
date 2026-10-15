@@ -292,6 +292,10 @@ function getUserStorageKey(email) {
  if (!email) return 'dados_financeiros_guest';
  return 'dados_financeiros_' + email.toLowerCase().trim().replace(/[^a-z0-9@._-]/g, '_');
 }
+function getUserDriveUrlKey(email) {
+ if (!email) return 'drive_url_guest';
+ return 'drive_url_' + email.toLowerCase().trim().replace(/[^a-z0-9@._-]/g, '_');
+}
 function obterUsuarios() {
  try {
  return JSON.parse(localStorage.getItem('financas_users_db_v1')) || [];
@@ -517,6 +521,7 @@ function carregarDados() {
  garantirEstruturaMes(estadoApp.mesAtual);
  salvarStorage();
  atualizarInterface();
+ sincDriveBackground();
 }
 function garantirEstruturaMes(mesKey) {
  sanitizarEstado();
@@ -579,6 +584,54 @@ function salvarStorage() {
  if (usuarioAtual && usuarioAtual.email) {
  const userKey = getUserStorageKey(usuarioAtual.email);
  localStorage.setItem(userKey, JSON.stringify(estadoApp));
+ sincronizarGoogleDriveAutomatico();
+ }
+ } catch(e) {}
+}
+/* SINCRONIZAÇÃO AUTOMÁTICA COM O GOOGLE DRIVE INDIVIDUAL DO USUÁRIO */
+function obterUrlDriveUsuario() {
+ if (!usuarioAtual || !usuarioAtual.email) return '';
+ return localStorage.getItem(getUserDriveUrlKey(usuarioAtual.email)) || '';
+}
+function salvarUrlDriveUsuario(url) {
+ if (!usuarioAtual || !usuarioAtual.email) return;
+ localStorage.setItem(getUserDriveUrlKey(usuarioAtual.email), url.trim());
+}
+async function sincronizarGoogleDriveAutomatico() {
+ const driveUrl = obterUrlDriveUsuario();
+ if (!driveUrl) return; // Se o usuário não configurou URL, opera apenas localmente com total privacidade
+ try {
+ const payload = {
+ action: 'saveData',
+ email: usuarioAtual.email,
+ data: estadoApp
+ };
+ await fetch(driveUrl, {
+ method: 'POST',
+ mode: 'no-cors',
+ headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+ body: JSON.stringify(payload)
+ });
+ } catch(e) {}
+}
+async function sincDriveBackground() {
+ const driveUrl = obterUrlDriveUsuario();
+ if (!driveUrl) return;
+ try {
+ const res = await fetch(driveUrl + '?email=' + encodeURIComponent(usuarioAtual.email) + '&t=' + Date.now(), {
+ method: 'GET',
+ redirect: 'follow',
+ cache: 'no-store'
+ });
+ if (res.ok) {
+ const result = await res.json();
+ if (result && result.status === 'success' && result.data) {
+ estadoApp = result.data;
+ sanitizarEstado();
+ const userKey = getUserStorageKey(usuarioAtual.email);
+ localStorage.setItem(userKey, JSON.stringify(estadoApp));
+ atualizarInterface();
+ }
  }
  } catch(e) {}
 }
@@ -2125,51 +2178,56 @@ function exportarRelatorioPDF() {
  if (btnPDF) btnPDF.style.display = 'flex';
  });
 }
-/* SISTEMA DE BACKUP E RESTAURAÇÃO (LOCAL + GOOGLE DRIVE) */
+/* SISTEMA DE BACKUP E RESTAURAÇÃO (LOCAL + GOOGLE DRIVE INDIVIDUAL) */
 function abrirBackupModal() {
+ const urlAtual = obterUrlDriveUsuario();
  abrirModalGarantido("Backup e Segurança", ` 
  <div class="space-y-4 text-xs">
- <p class="text-slate-400 leading-relaxed">Exporte ou restaure seus dados orçamentários com segurança no seu dispositivo ou na sua nuvem.</p>
+ <p class="text-slate-400 leading-relaxed">Exporte, restaure ou configure sua nuvem pessoal com segurança total e isolada.</p>
  
+ <!-- CONFIGURAÇÃO DE GOOGLE DRIVE PESSOAL -->
+ <div class="space-y-2 bg-indigo-950/40 p-3 rounded-xl border border-indigo-500/30">
+ <h4 class="font-bold text-indigo-300 uppercase tracking-wide flex items-center gap-1.5"><i class="fa-brands fa-google-drive"></i> Sincronização Google Drive (Opcional)</h4>
+ <p class="text-[11px] text-slate-400">Insira a URL do seu Web App do Google Apps Script para salvar automaticamente na sua nuvem pessoal:</p>
+ <div>
+ <input type="text" id="inputUserDriveUrl" value="${urlAtual}" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 mt-1 focus:outline-none focus:border-indigo-500">
+ </div>
+ <button type="button" onclick="salvarConfigDriveUsuario()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl text-xs transition active:scale-95 shadow-md">Salvar URL do Meu Drive</button>
+ </div>
+
  <!-- EXPORTAÇÃO -->
  <div class="space-y-2 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
- <h4 class="font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-download"></i> 1. Exportar Backup</h4>
- <p class="text-[11px] text-slate-400">Gera o arquivo de backup formatado com data e hora atual.</p>
+ <h4 class="font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-download"></i> 1. Exportar Backup Local</h4>
  <div class="grid grid-cols-1 gap-2 pt-1">
  <button type="button" onclick="exportarBackupLocal()" class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-2 rounded-xl border border-slate-700 transition flex items-center justify-center space-x-2 active:scale-95">
  <i class="fa-solid fa-mobile-screen"></i>
- <span>Salvar no Dispositivo / Celular</span>
- </button>
- <button type="button" onclick="exportarBackupGoogleDrive()" class="w-full bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold py-2 rounded-xl border border-indigo-500/40 transition flex items-center justify-center space-x-2 active:scale-95">
- <i class="fa-brands fa-google-drive"></i>
- <span>Salvar no Google Drive</span>
+ <span>Baixar Arquivo no Dispositivo</span>
  </button>
  </div>
  </div>
  <!-- RESTAURAÇÃO -->
  <div class="space-y-2 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
- <h4 class="font-bold text-blue-400 uppercase tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-upload"></i> 2. Restaurar Backup</h4>
- <p class="text-[11px] text-slate-400">Selecione o arquivo de backup para sobrescrever e atualizar suas informações.</p>
- 
+ <h4 class="font-bold text-blue-400 uppercase tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-upload"></i> 2. Restaurar Backup Local</h4>
  <div class="space-y-2 pt-1">
  <div>
- <label class="text-[10px] text-slate-400 block mb-1">Restaurar do Celular/PC (.json):</label>
+ <label class="text-[10px] text-slate-400 block mb-1">Selecionar arquivo (.json):</label>
  <input type="file" id="importFileInputLocal" accept=".json" class="w-full text-xs text-slate-400 bg-slate-950 border border-slate-800 rounded-xl p-2">
  <button type="button" onclick="importarBackupLocal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold py-2 rounded-xl mt-1.5 transition flex items-center justify-center space-x-2 active:scale-95 border border-slate-700">
  <i class="fa-solid fa-file-import"></i>
- <span>Restaurar do Arquivo Local</span>
- </button>
- </div>
- <div class="border-t border-slate-800 pt-2">
- <button type="button" onclick="abrirRestaurarGoogleDriveModal()" class="w-full bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold py-2.5 rounded-xl border border-indigo-500/40 transition flex items-center justify-center space-x-2 active:scale-95">
- <i class="fa-brands fa-google-drive"></i>
- <span>Restaurar do Google Drive</span>
+ <span>Restaurar do Arquivo Selecionado</span>
  </button>
  </div>
  </div>
  </div>
  </div>
  `);
+}
+function salvarConfigDriveUsuario() {
+ const urlInput = document.getElementById('inputUserDriveUrl').value.trim();
+ salvarUrlDriveUsuario(urlInput);
+ alert("URL do Google Drive salva com sucesso para a sua conta!");
+ fecharModal();
+ sincDriveBackground();
 }
 function gerarNomeArquivoBackup() {
  const agora = new Date();
@@ -2187,40 +2245,6 @@ function exportarBackupLocal() {
  a.click();
  URL.revokeObjectURL(url);
 }
-function exportarBackupGoogleDrive() {
- const fileName = gerarNomeArquivoBackup();
- exportarBackupLocal();
- if (navigator.share) {
- try {
- const jsonStr = JSON.stringify(estadoApp, null, 2);
- const file = new File([jsonStr], fileName, { type: "application/json" });
- navigator.share({
- title: 'Backup Finanças',
- text: 'Backup do sistema orçamentário',
- files: [file]
- }).catch(() => {});
- } catch(e) {}
- }
- abrirModalGarantido("Salvar no Google Drive", `
- <div class="space-y-3 text-xs text-slate-300">
- <div class="flex items-center space-x-2 text-emerald-400 font-bold text-sm">
- <i class="fa-brands fa-google-drive text-xl"></i>
- <span>Arquivo de Backup Gerado!</span>
- </div>
- <p class="text-slate-400 leading-relaxed">O arquivo <b class="text-slate-100">${fileName}</b> foi gerado e baixado para o seu aparelho.</p>
- 
- <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2 text-[11px]">
- <p class="font-bold text-slate-200">Como salvar na nuvem do Google Drive:</p>
- <ol class="list-decimal list-inside space-y-1.5 text-slate-400">
- <li>Se a janela de compartilhamento do seu celular abriu, selecione o ícone do <b>Google Drive</b>.</li>
- <li>Caso não tenha aberto, abra o app do <b>Google Drive</b> no seu celular ou computador.</li>
- <li>Clique no botão <b>'+' (Novo) -> Fazer Upload</b> e selecione o arquivo <b>${fileName}</b> da sua pasta de Downloads.</li>
- </ol>
- </div>
- <button type="button" onclick="fecharModal()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-2 transition active:scale-95">Entendido</button>
- </div>
- `);
-} 
 function importarBackupLocal() {
  const fileInput = document.getElementById('importFileInputLocal');
  if (!fileInput || !fileInput.files.length) {
@@ -2247,58 +2271,6 @@ function importarBackupLocal() {
  };
  reader.readAsText(file);
 }
-function abrirRestaurarGoogleDriveModal() {
- abrirModalGarantido("Restaurar do Google Drive", `
- <div class="space-y-3 text-xs text-slate-300">
- <div class="flex items-center space-x-2 text-indigo-400 font-bold text-sm">
- <i class="fa-brands fa-google-drive text-xl"></i>
- <span>Restaurar do Google Drive / Nuvem</span>
- </div>
- <p class="text-slate-400 leading-relaxed">Para restaurar um backup salvo na sua conta do Google Drive:</p>
- 
- <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2 text-[11px] text-slate-400">
- <p class="font-bold text-slate-200">Instruções:</p>
- <ol class="list-decimal list-inside space-y-1">
- <li>Selecione o arquivo de backup baixado do seu Google Drive.</li>
- <li>Clique no botão abaixo para escolher o arquivo <b>.json</b> com a data mais recente.</li> 
- </ol>
- </div>
- <div class="pt-2">
- <input type="file" id="importFileInputDrive" accept=".json" class="w-full text-xs text-slate-400 bg-slate-950 border border-slate-800 rounded-xl p-2.5">
- <button type="button" onclick="executarImportacaoDrive()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs mt-3 transition active:scale-95 flex items-center justify-center space-x-2 shadow-md">
- <i class="fa-solid fa-cloud-arrow-up"></i>
- <span>Confirmar e Restaurar Backup</span>
- </button>
- </div>
- </div>
- `);
-}
-function executarImportacaoDrive() {
- const fileInput = document.getElementById('importFileInputDrive');
- if (!fileInput || !fileInput.files.length) {
- alert("Por favor, selecione um arquivo JSON de backup.");
- return;
- }
- const file = fileInput.files[0];
- const reader = new FileReader();
- reader.onload = function(e) {
- try {
- const dadosImportados = JSON.parse(e.target.result);
- if (dadosImportados && dadosImportados.dadosMes) {
- estadoApp = dadosImportados;
- salvarStorage();
- fecharModal();
- alert("Backup do Google Drive restaurado com sucesso!");
- atualizarInterface();
- } else {
- alert("Arquivo de backup inválido ou incompatível.");
- }
- } catch(err) {
- alert("Erro ao ler o arquivo de backup.");
- }
- };
- reader.readAsText(file);
-} 
 document.addEventListener('keydown', function(e) {
  if (e.key === 'Escape') fecharModal();
 });
@@ -2314,6 +2286,8 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('authContainer').classList.remove('hidden');
  }
  } else {
+ document.getElementById('authContainer').classList.add('hidden');
+ // Exibe tela de login
  document.getElementById('authContainer').classList.remove('hidden');
  }
 });
