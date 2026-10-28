@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -108,6 +108,7 @@ button, input, select, a { touch-action: manipulation; }
  </div>
  </div>
 </div>
+
 <!-- CONTEÚDO PRINCIPAL DO APLICATIVO -->
 <div id="appMainContent" class="hidden">
 <!-- Header -->
@@ -263,6 +264,7 @@ button, input, select, a { touch-action: manipulation; }
 </div>
 </footer>
 </div>
+
 <!-- Modal Genérico -->
 <div id="modalTransacao" onclick="fecharModalFora(event)" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
 <div onclick="event.stopPropagation()" class="bg-cardBg border border-borderCol rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -275,17 +277,28 @@ button, input, select, a { touch-action: manipulation; }
 </div>
 </div>
 </div>
+
 <script>
+/* LISTA DE CATEGORIAS COMPLETAS E ABRANGENTES PARA A RESIDÊNCIA E FAMÍLIA */
 const CATEGORIAS_PADRAO = [ 
- 'Alimentação / Supermercado',
- 'Transporte / Combustível',
- 'Moradia / Contas',
- 'Saúde / Farmácia',
- 'Lazer / Entretenimento',
- 'Educação',
+ 'Alimentação / Supermercado / Feira',
+ 'Açougue / Hortifrúti / Padaria',
+ 'Moradia / Aluguel / Condomínio',
+ 'Contas Residenciais (Água, Luz, Gás, Internet, TV/Streaming)',
+ 'Transporte / Combustível / Uber / Manutenção Veículo',
+ 'Saúde / Farmácia / Plano de Saúde / Consultas',
+ 'Educação / Cursos',
+ 'Lazer / Viagens',
  'Vestuário',
+ 'Pets / Ração',
+ 'Investimentos',
+ 'Presentes',
+ 'Cuidados Pessoais / Barbearia / Cosméticos',
+ 'Impostos, Taxas & Seguros',
+ 'Imprevistos / Manutenção Residencial',
  'Outros'
 ];
+
 /* SISTEMA DE AUTENTICAÇÃO E ISOLAMENTO DE USUÁRIOS */
 let usuarioAtual = null;
 function getUserStorageKey(email) {
@@ -485,7 +498,11 @@ function sanitizarEstado() {
  });
  });
  if (!d.pagamentoFatura || typeof d.pagamentoFatura !== 'object') {
- d.pagamentoFatura = { valorPago: 0, dataPagamento: '' };
+ d.pagamentoFatura = { valorPago: 0, dataPagamento: '', jurosPercentual: 0, encargosFixos: 0, rotativoTransferido: 0 };
+ } else {
+ if (typeof d.pagamentoFatura.jurosPercentual !== 'number') d.pagamentoFatura.jurosPercentual = 0;
+ if (typeof d.pagamentoFatura.encargosFixos !== 'number') d.pagamentoFatura.encargosFixos = 0;
+ if (typeof d.pagamentoFatura.rotativoTransferido !== 'number') d.pagamentoFatura.rotativoTransferido = 0;
  }
  }
  });
@@ -575,7 +592,7 @@ function garantirEstruturaMes(mesKey) {
  parcelado: [],
  avista: assinaturasAnteriores,
  gastosConta: [],
- pagamentoFatura: { valorPago: 0, dataPagamento: '' }
+ pagamentoFatura: { valorPago: 0, dataPagamento: '', jurosPercentual: 0, encargosFixos: 0, rotativoTransferido: 0 }
  };
  }
 }
@@ -599,7 +616,7 @@ function salvarUrlDriveUsuario(url) {
 }
 async function sincronizarGoogleDriveAutomatico() {
  const driveUrl = obterUrlDriveUsuario();
- if (!driveUrl) return; // Se o usuário não configurou URL, opera apenas localmente com total privacidade
+ if (!driveUrl) return; 
  try {
  const payload = {
  action: 'saveData',
@@ -923,16 +940,20 @@ function processarComandoVozIA(texto) {
  }
  let descricao = texto;
  let categoriaInferida = 'Outros';
- if (t.includes('mercado') || t.includes('supermercado') || t.includes('comida') || t.includes('almoço') || t.includes('lanche')) {
- categoriaInferida = 'Alimentação / Supermercado';
+ if (t.includes('mercado') || t.includes('supermercado') || t.includes('comida') || t.includes('almoço') || t.includes('lanche') || t.includes('feira')) {
+ categoriaInferida = 'Alimentação / Supermercado / Feira';
+ } else if (t.includes('açougue') || t.includes('carne') || t.includes('fruta') || t.includes('padaria') || t.includes('pão')) {
+ categoriaInferida = 'Açougue / Hortifrúti / Padaria';
  } else if (t.includes('gasolina') || t.includes('combustivel') || t.includes('uber') || t.includes('posto') || t.includes('carro')) {
- categoriaInferida = 'Transporte / Combustível';
- } else if (t.includes('aluguel') || t.includes('luz') || t.includes('agua') || t.includes('energia') || t.includes('internet')) {
- categoriaInferida = 'Moradia / Contas';
- } else if (t.includes('farmacia') || t.includes('remedio') || t.includes('medico')) {
- categoriaInferida = 'Saúde / Farmácia';
- } else if (t.includes('cinema') || t.includes('jogo') || t.includes('show')) {
- categoriaInferida = 'Lazer / Entretenimento';
+ categoriaInferida = 'Transporte / Combustível / Uber / Manutenção Veículo';
+ } else if (t.includes('aluguel') || t.includes('condominio')) {
+ categoriaInferida = 'Moradia / Aluguel / Condomínio';
+ } else if (t.includes('luz') || t.includes('agua') || t.includes('energia') || t.includes('internet') || t.includes('gas')) {
+ categoriaInferida = 'Contas Residenciais (Água, Luz, Gás, Internet, TV/Streaming)';
+ } else if (t.includes('farmacia') || t.includes('remedio') || t.includes('medico') || t.includes('consulta')) {
+ categoriaInferida = 'Saúde / Farmácia / Plano de Saúde / Consultas';
+ } else if (t.includes('pet') || t.includes('ração') || t.includes('veterinario')) {
+ categoriaInferida = 'Pets / Ração';
  }
  let tipoSugerido = 'gastoConta';
  if (t.includes('cartao') || t.includes('crédito') || t.includes('fatura')) {
@@ -965,14 +986,24 @@ function gerarSelectCategoria(idSelect, valorSelecionado = 'Outros') {
  </div>
  `;
 }
+
+/* MELHORIA 3: BAIXA AUTOMÁTICA NO SALDO DA CONTA BANCÁRIA AO PAGAR DÍVIDAS */
 function toggleStatusPago(tipo, id) {
  const dados = estadoApp.dadosMes[estadoApp.mesAtual];
  if (dados && dados[tipo]) {
  const item = dados[tipo].find(i => i.id === id);
  if (item) {
  item.pago = !item.pago;
- if (item.pago && !item.dataPagamento) {
+ const valor = Number(item.valor || 0);
+ if (item.pago) {
+ if (!item.dataPagamento) {
  item.dataPagamento = new Date().toISOString().split('T')[0];
+ }
+ // Desconta automaticamente da Conta Bancária
+ estadoApp.contaBancaria -= valor;
+ } else {
+ // Devolve o valor à Conta Bancária ao desmarcar
+ estadoApp.contaBancaria += valor;
  }
  salvarStorage();
  atualizarInterface();
@@ -996,8 +1027,11 @@ function salvarDataPagamentoItem(tipo, id) {
  if (item) {
  const novaData = document.getElementById('inputDataPagamentoDivida').value;
  if(novaData) {
- item.dataPagamento = novaData;
+ if (!item.pago) {
  item.pago = true;
+ estadoApp.contaBancaria -= Number(item.valor || 0);
+ }
+ item.dataPagamento = novaData;
  salvarStorage();
  atualizarInterface();
  fecharModal();
@@ -1283,6 +1317,7 @@ function executarRemocao(tipo, idTarget, nomeBaseTarget, escopo) {
  fecharModal();
  atualizarInterface();
 }
+
 function renderizarAbaAtiva() {
  const container = document.getElementById('conteudoAbas');
  const dados = estadoApp.dadosMes[estadoApp.mesAtual] || {};
@@ -1459,14 +1494,19 @@ function renderizarAbaAtiva() {
  } else {
  avista.forEach(item => {
  const ehAssinatura = !!item.ehAssinatura;
+ const ehRotativo = !!item.ehRotativo;
  const tagAssinatura = ehAssinatura
  ? `<span class="bg-indigo-500/20 text-indigo-400 font-bold text-[9px] px-1.5 py-0.5 rounded border border-indigo-500/30 uppercase tracking-wider mr-1.5 inline-flex items-center gap-1"><i class="fa-solid fa-rotate-right text-[8px]"></i>Assinatura</span>`
+ : '';
+ const tagRotativo = ehRotativo
+ ? `<span class="bg-amber-500/20 text-amber-400 font-bold text-[9px] px-1.5 py-0.5 rounded border border-amber-500/30 uppercase tracking-wider mr-1.5 inline-flex items-center gap-1"><i class="fa-solid fa-calculator text-[8px]"></i>Rotativo BB</span>`
  : '';
  corpoSubHtml += `
  <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 transition">
  <div>
  <p class="text-xs font-bold text-slate-200 flex items-center flex-wrap">
  ${tagAssinatura}
+ ${tagRotativo}
  <span>${item.estabelecimento}</span>
  </p>
  <p class="text-[10px] text-slate-400">
@@ -1530,33 +1570,65 @@ function renderizarAbaAtiva() {
  }
  corpoSubHtml += `</div>`;
  } else if (sub === 'fatura') {
+ /* MELHORIA 4: GESTÃO AVANÇADA DE ROTATIVO / PAGAMENTO PARCIAL (BANCO DO BRASIL) */
  let totalParcelado = (dados.parcelado || []).reduce((acc, i) => acc + Number(i.valorParcela || 0), 0);
  let totalAvista = (dados.avista || []).reduce((acc, i) => acc + Number(i.valor || 0), 0);
  let totalFatura = totalParcelado + totalAvista;
  let pago = dados.pagamentoFatura ? Number(dados.pagamentoFatura.valorPago || 0) : 0;
  let dataPag = dados.pagamentoFatura ? dados.pagamentoFatura.dataPagamento || '' : '';
+ let jurosPerc = dados.pagamentoFatura ? Number(dados.pagamentoFatura.jurosPercentual || 0) : 0;
+ let encargosFix = dados.pagamentoFatura ? Number(dados.pagamentoFatura.encargosFixos || 0) : 0;
  let saldoDevedor = Math.max(0, totalFatura - pago);
+ let valorJurosRotativo = (saldoDevedor * (jurosPerc / 100));
+ let encargosTotaisRotativo = valorJurosRotativo + encargosFix;
+ let saldoProximaFatura = saldoDevedor + encargosTotaisRotativo;
+
  corpoSubHtml = `
  <div class="space-y-4">
  <h4 class="font-bold text-sm text-slate-200">Pagamento Consolidado da Fatura</h4>
  <div class="bg-slate-800/60 p-3 rounded-xl space-y-1.5 text-xs border border-slate-700/50">
  <div class="flex justify-between"><span class="text-slate-400">Total Parcelado:</span><span class="font-bold">${formatarMoeda(totalParcelado)}</span></div>
- <div class="flex justify-between"><span class="text-slate-400">Total À Vista:</span><span class="font-bold">${formatarMoeda(totalAvista)}</span></div>
- <div class="border-t border-slate-700 pt-1.5 flex justify-between text-emerald-400 font-bold"><span>Valor Total Fatura:</span><span>${formatarMoeda(totalFatura)}</span></div> 
+ <div class="flex justify-between"><span class="text-slate-400">Total À Vista & Assinaturas:</span><span class="font-bold">${formatarMoeda(totalAvista)}</span></div>
+ <div class="border-t border-slate-700 pt-1.5 flex justify-between text-emerald-400 font-bold"><span>Valor Total da Fatura:</span><span>${formatarMoeda(totalFatura)}</span></div> 
  </div>
- <div class="space-y-2">
- <label class="text-xs text-slate-300 font-medium">Quanto foi pago desta fatura?</label>
- <input type="number" step="0.01" id="inputValorPagoFatura" value="${pago}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+
+ <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+ <label class="text-xs text-slate-300 font-medium block">Quanto foi pago desta fatura? (R$)</label>
+ <input type="number" step="0.01" id="inputValorPagoFatura" value="${pago}" oninput="atualizarCalculoRotativoLive()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
  </div>
- <div class="space-y-2">
- <label class="text-xs text-slate-300 font-medium">Data do pagamento:</label>
+
+ <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+ <label class="text-xs text-slate-300 font-medium block">Data do pagamento:</label>
  <input type="date" id="inputDataPagoFatura" value="${dataPag}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
  </div>
- <button type="button" onclick="salvarPagamentoFatura()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95">Atualizar Pagamento</button>
- <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
- <span class="text-slate-400">Saldo Devedor Restante:</span>
- <span class="font-bold ${saldoDevedor > 0 ? 'text-rose-400' : 'text-emerald-400'}">${formatarMoeda(saldoDevedor)}</span>
+
+ <!-- PAINEL ROTATIVO BANCO DO BRASIL -->
+ <div class="bg-amber-950/20 border border-amber-500/30 p-3.5 rounded-xl space-y-3">
+ <div class="flex items-center space-x-2 text-amber-400 font-bold text-xs">
+ <i class="fa-solid fa-calculator"></i>
+ <span>Gestão de Rotativo / Financiamento BB</span>
  </div>
+ <p class="text-[11px] text-slate-400">Se você pagar menos que o valor total da fatura, o saldo restante e os encargos informados abaixo serão transferidos para a fatura do mês seguinte.</p>
+ 
+ <div class="grid grid-cols-2 gap-2">
+ <div>
+ <label class="text-[10px] text-slate-400">Encargos/Juros Rotativo (%)</label>
+ <input type="number" step="0.01" id="inputJurosRotativo" value="${jurosPerc}" oninput="atualizarCalculoRotativoLive()" placeholder="Ex: 14.5" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 mt-1 focus:outline-none focus:border-amber-500">
+ </div>
+ <div>
+ <label class="text-[10px] text-slate-400">Tarifas / IOF Extras (R$)</label>
+ <input type="number" step="0.01" id="inputEncargosFixos" value="${encargosFix}" oninput="atualizarCalculoRotativoLive()" placeholder="Ex: 15.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 mt-1 focus:outline-none focus:border-amber-500">
+ </div>
+ </div>
+
+ <div id="painelCalculoRotativoLive" class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1 text-[11px]">
+ <div class="flex justify-between"><span class="text-slate-400">Saldo Devedor Restante:</span><span id="dispSaldoDev" class="font-bold text-rose-400">${formatarMoeda(saldoDevedor)}</span></div>
+ <div class="flex justify-between"><span class="text-slate-400">Encargos Estimados (Juros+IOF):</span><span id="dispEncargosEst" class="font-bold text-amber-400">${formatarMoeda(encargosTotaisRotativo)}</span></div>
+ <div class="flex justify-between border-t border-slate-800 pt-1 font-bold text-slate-100"><span>Transferência p/ Próx. Fatura:</span><span id="dispTotalProx" class="text-indigo-400">${formatarMoeda(saldoProximaFatura)}</span></div>
+ </div>
+ </div>
+
+ <button type="button" onclick="salvarPagamentoFatura(${totalFatura})" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95 shadow-md">Confirmar e Salvar Pagamento da Fatura</button>
  </div>
  `;
  }
@@ -1577,6 +1649,37 @@ function renderizarAbaAtiva() {
  container.innerHTML = subBarHtml + corpoSubHtml + fechamentoHtml;
  }
 }
+
+/* CÁLCULO AO VIVO DOS ENCARGOS DO ROTATIVO */
+function atualizarCalculoRotativoLive() {
+ const elPago = document.getElementById('inputValorPagoFatura');
+ const elJuros = document.getElementById('inputJurosRotativo');
+ const elEncargos = document.getElementById('inputEncargosFixos');
+ if (!elPago || !elJuros || !elEncargos) return;
+
+ const dados = estadoApp.dadosMes[estadoApp.mesAtual] || {};
+ let totalParcelado = (dados.parcelado || []).reduce((acc, i) => acc + Number(i.valorParcela || 0), 0);
+ let totalAvista = (dados.avista || []).reduce((acc, i) => acc + Number(i.valor || 0), 0);
+ let totalFatura = totalParcelado + totalAvista;
+
+ let valPago = parseFloat(elPago.value) || 0;
+ let jurosPerc = parseFloat(elJuros.value) || 0;
+ let encargosFix = parseFloat(elEncargos.value) || 0;
+
+ let saldoDev = Math.max(0, totalFatura - valPago);
+ let jurosVal = (saldoDev * (jurosPerc / 100));
+ let encargosTotais = jurosVal + encargosFix;
+ let totalProx = saldoDev + encargosTotais;
+
+ const dispSaldo = document.getElementById('dispSaldoDev');
+ const dispEnc = document.getElementById('dispEncargosEst');
+ const dispProx = document.getElementById('dispTotalProx');
+
+ if (dispSaldo) dispSaldo.innerText = formatarMoeda(saldoDev);
+ if (dispEnc) dispEnc.innerText = formatarMoeda(encargosTotais);
+ if (dispProx) dispProx.innerText = formatarMoeda(totalProx);
+}
+
 function editarFechamentoCartao() {
  const diaFechAtual = getFechamentoCartaoMes(estadoApp.mesAtual);
  abrirModalGarantido("Dia de Fechamento do Cartão", `
@@ -1655,6 +1758,37 @@ function abrirSubMenuCartao() {
  </div>
  `);
 }
+
+/* MELHORIA 1: DETECÇÃO INTELIGENTE DE DUPLICIDADE */
+function verificarDuplicidade(tipo, dadosItem) {
+ const mesDados = estadoApp.dadosMes[estadoApp.mesAtual];
+ if (!mesDados) return null;
+ const chave = (tipo === 'gastoConta') ? 'gastosConta' : tipo;
+ const lista = mesDados[chave] || [];
+
+ const descNova = (dadosItem.descricao || dadosItem.estabelecimento || '').toLowerCase().trim();
+ const valNovo = Number(dadosItem.valor || dadosItem.valorParcela || 0);
+ const dataNova = dadosItem.vencimento || dadosItem.compra || dadosItem.data || '';
+
+ for (let item of lista) {
+ const descExistente = (item.descricao || item.estabelecimento || '').toLowerCase().trim();
+ const valExistente = Number(item.valor || item.valorParcela || 0);
+ const dataExistente = item.vencimento || item.compra || item.data || '';
+
+ const mesmoValor = Math.abs(valExistente - valNovo) < 0.01;
+ const mesmaData = dataNova && dataExistente && (dataNova === dataExistente);
+ const nomeSemelhante = descNova && descExistente && (descNova.includes(descExistente) || descExistente.includes(descNova));
+
+ if (mesmoValor && (mesmaData || nomeSemelhante)) {
+ return item;
+ }
+ if (nomeSemelhante && mesmaData && descNova.length > 3) {
+ return item;
+ }
+ }
+ return null;
+}
+
 function adicionarItem(tipo) {
  let titulo = 'Novo Lançamento';
  if(tipo === 'fixas') titulo = 'Adicionar Dívida Fixa';
@@ -1717,13 +1851,61 @@ function adicionarItem(tipo) {
  html += `<button type="button" onclick="salvarNovoItem('${tipo}')" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs mt-3 transition active:scale-95">Salvar Item</button>`;
  abrirModalGarantido(titulo, html);
 }
-function salvarNovoItem(tipo) {
+
+function salvarNovoItem(tipo, forcar = false) {
  const novoId = Date.now();
  const categoria = document.getElementById('addCategoria')?.value || 'Outros';
+
+ let dadosItemTemp = { categoria };
+ if (tipo === 'fixas' || tipo === 'variadas' || tipo === 'gastoConta') {
+ dadosItemTemp.descricao = document.getElementById('addDesc')?.value.trim();
+ dadosItemTemp.vencimento = document.getElementById('addVenc')?.value || document.getElementById('addCompra')?.value;
+ dadosItemTemp.data = dadosItemTemp.vencimento;
+ dadosItemTemp.valor = parseFloat(document.getElementById('addVal')?.value) || 0;
+ } else if (tipo === 'avista' || tipo === 'assinatura') {
+ dadosItemTemp.estabelecimento = document.getElementById('addEstab')?.value.trim();
+ dadosItemTemp.data = document.getElementById('addCompra')?.value;
+ dadosItemTemp.valor = parseFloat(document.getElementById('addVal')?.value) || 0;
+ } else if (tipo === 'parcelado') {
+ dadosItemTemp.estabelecimento = document.getElementById('addEstab')?.value.trim();
+ dadosItemTemp.compra = document.getElementById('addCompra')?.value;
+ dadosItemTemp.valorParcela = parseFloat(document.getElementById('addVal')?.value) || 0;
+ }
+
+ // VERIFICAÇÃO INTELIGENTE DE DUPLICIDADE (MENSAGEM DE ALERTA SEM TRAVAMENTO)
+ if (!forcar) {
+ const duplicado = verificarDuplicidade(tipo, dadosItemTemp);
+ if (duplicado) {
+ const nomeDup = duplicado.descricao || duplicado.estabelecimento;
+ const valDup = formatarMoeda(duplicado.valor || duplicado.valorParcela);
+ const htmlDup = `
+ <div class="space-y-4">
+ <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl space-y-1">
+ <div class="flex items-center space-x-2 text-amber-400 font-bold text-xs">
+ <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+ <span>Atenção: Possível Lançamento Duplicado</span>
+ </div>
+ <p class="text-[11px] text-slate-300">Encontramos um registro com valor/nome ou data similar neste mês:</p>
+ <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 text-xs font-semibold text-slate-100 mt-1">
+ <span>${nomeDup}</span> • <span class="text-amber-400">${valDup}</span>
+ </div>
+ </div>
+ <p class="text-xs text-slate-300">Tem certeza que deseja registrar este novo lançamento mesmo assim?</p>
+ <div class="flex space-x-2 pt-1">
+ <button type="button" onclick="fecharModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition active:scale-95">Revisar / Cancelar</button>
+ <button type="button" onclick="salvarNovoItem('${tipo}', true)" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95">Continuar e Salvar</button>
+ </div>
+ </div>
+ `;
+ abrirModalGarantido("Alerta de Duplicidade", htmlDup);
+ return;
+ }
+ }
+
  if(tipo === 'fixas') {
- const desc = document.getElementById('addDesc').value.trim();
- const venc = document.getElementById('addVenc').value;
- const val = parseFloat(document.getElementById('addVal').value) || 0;
+ const desc = dadosItemTemp.descricao;
+ const venc = dadosItemTemp.vencimento;
+ const val = dadosItemTemp.valor;
  if(!desc) { alert("Informe uma descrição!"); return; }
  const diaVenc = (venc && venc.includes('-')) ? venc.split('-')[2] : '05';
  const mesAtualKey = estadoApp.mesAtual;
@@ -1745,16 +1927,16 @@ function salvarNovoItem(tipo) {
  }
  });
  } else if(tipo === 'variadas') {
- const desc = document.getElementById('addDesc').value.trim();
- const venc = document.getElementById('addVenc').value;
- const val = parseFloat(document.getElementById('addVal').value) || 0;
+ const desc = dadosItemTemp.descricao;
+ const venc = dadosItemTemp.vencimento;
+ const val = dadosItemTemp.valor;
  if(!desc) { alert("Informe uma descrição!"); return; }
  const dados = estadoApp.dadosMes[estadoApp.mesAtual];
  dados.variadas.push({ id: novoId, descricao: desc, vencimento: venc, valor: val, pago: false, dataPagamento: '', categoria: categoria });
  } else if(tipo === 'avista' || tipo === 'assinatura') {
- const estab = document.getElementById('addEstab').value.trim();
- const dataCompra = document.getElementById('addCompra').value;
- const val = parseFloat(document.getElementById('addVal').value) || 0;
+ const estab = dadosItemTemp.estabelecimento;
+ const dataCompra = dadosItemTemp.data;
+ const val = dadosItemTemp.valor;
  const ehAssinatura = document.getElementById('addEhAssinatura')?.checked || (tipo === 'assinatura');
  if(!estab || !dataCompra) { alert("Informe o estabelecimento e a data!"); return; }
  if (ehAssinatura) {
@@ -1801,10 +1983,10 @@ function salvarNovoItem(tipo) {
  alert(`Compra lançada na fatura de ${mesD}/${anoD}!`);
  }
  } else if(tipo === 'parcelado') {
- const estab = document.getElementById('addEstab').value.trim();
- const dataCompra = document.getElementById('addCompra').value;
+ const estab = dadosItemTemp.estabelecimento;
+ const dataCompra = dadosItemTemp.compra;
  const numParcelas = parseInt(document.getElementById('addNumParcelas').value) || 1;
- const valParcela = parseFloat(document.getElementById('addVal').value) || 0;
+ const valParcela = dadosItemTemp.valorParcela;
  if(!estab || !dataCompra) { alert("Informe o estabelecimento e a data!"); return; }
  const mesCompraKey = dataCompra.substring(0, 7);
  garantirEstruturaMes(mesCompraKey);
@@ -1823,9 +2005,9 @@ function salvarNovoItem(tipo) {
  }
  alert(`${numParcelas} parcela(s) gerada(s) a partir da fatura inicial!`);
  } else if(tipo === 'gastoConta') {
- const desc = document.getElementById('addDesc').value.trim();
- const dataGasto = document.getElementById('addVenc').value;
- const val = parseFloat(document.getElementById('addVal').value) || 0;
+ const desc = dadosItemTemp.descricao;
+ const dataGasto = dadosItemTemp.data;
+ const val = dadosItemTemp.valor;
  if(!desc || val <= 0) {
  alert("Informe uma descrição válida e valor maior que zero!");
  return;
@@ -1846,14 +2028,70 @@ function salvarNovoItem(tipo) {
  fecharModal();
  atualizarInterface();
 }
-function salvarPagamentoFatura() {
- const val = parseFloat(document.getElementById('inputValorPagoFatura').value) || 0;
+
+/* MELHORIA 4: SALVAR PAGAMENTO DA FATURA COM ROTATIVO E BAIXA NA CONTA BANCÁRIA */
+function salvarPagamentoFatura(totalFaturaCalculada) {
+ const dados = estadoApp.dadosMes[estadoApp.mesAtual];
+ if (!dados) return;
+
+ let totalParcelado = (dados.parcelado || []).reduce((acc, i) => acc + Number(i.valorParcela || 0), 0);
+ let totalAvista = (dados.avista || []).reduce((acc, i) => acc + Number(i.valor || 0), 0);
+ let totalFatura = totalFaturaCalculada || (totalParcelado + totalAvista);
+
+ const valNovo = parseFloat(document.getElementById('inputValorPagoFatura').value) || 0;
  const dt = document.getElementById('inputDataPagoFatura').value || '';
- estadoApp.dadosMes[estadoApp.mesAtual].pagamentoFatura = { valorPago: val, dataPagamento: dt };
+ const jurosPerc = parseFloat(document.getElementById('inputJurosRotativo')?.value) || 0;
+ const encargosFix = parseFloat(document.getElementById('inputEncargosFixos')?.value) || 0;
+
+ const pagoAntigo = Number(dados.pagamentoFatura ? dados.pagamentoFatura.valorPago : 0);
+ const diff = valNovo - pagoAntigo;
+
+ // Baixa / Ajuste automático na conta bancária (Melhoria 3)
+ estadoApp.contaBancaria -= diff;
+
+ // Saldo devedor e encargos do rotativo (Melhoria 4)
+ const saldoDevedor = Math.max(0, totalFatura - valNovo);
+ const jurosVal = (saldoDevedor * (jurosPerc / 100));
+ const encargosTotais = jurosVal + encargosFix;
+ const totalRotativoTransferir = saldoDevedor + encargosTotais;
+
+ dados.pagamentoFatura = {
+ valorPago: valNovo,
+ dataPagamento: dt,
+ jurosPercentual: jurosPerc,
+ encargosFixos: encargosFix,
+ rotativoTransferido: totalRotativoTransferir
+ };
+
+ // Transferir o saldo devedor e os encargos para o próximo mês
+ const proximoMesKey = somarMesesKey(estadoApp.mesAtual, 1);
+ garantirEstruturaMes(proximoMesKey);
+
+ // Limpa rotativo anterior vindo deste mês se já houver
+ estadoApp.dadosMes[proximoMesKey].avista = (estadoApp.dadosMes[proximoMesKey].avista || []).filter(i => i.idRotativoOrigem !== estadoApp.mesAtual);
+
+ if (saldoDevedor > 0) {
+ estadoApp.dadosMes[proximoMesKey].avista.push({
+ id: Date.now(),
+ idRotativoOrigem: estadoApp.mesAtual,
+ estabelecimento: `Saldo Rotativo Fatura Anterior (${estadoApp.mesAtual}) + Encargos BB`,
+ data: `${proximoMesKey}-01`,
+ valor: totalRotativoTransferir,
+ ehAssinatura: false,
+ categoria: 'Impostos, Taxas & Seguros',
+ ehRotativo: true
+ });
+ }
+
  salvarStorage();
- atualizarInterface(); 
- alert('Pagamento de fatura atualizado com sucesso!');
+ atualizarInterface();
+ if (saldoDevedor > 0) {
+ alert(`Pagamento de ${formatarMoeda(valNovo)} registrado!\n- Descontado do saldo em conta.\n- ${formatarMoeda(totalRotativoTransferir)} (Saldo + Encargos BB) transferido para a fatura de ${proximoMesKey}.`);
+ } else {
+ alert('Pagamento integral da fatura atualizado com sucesso e descontado da Conta Bancária!');
+ }
 }
+
 /* RELATÓRIO EXECUTIVO FINANCEIRO COMPLETO */
 function abrirRelatorioMensal() {
  const dados = estadoApp.dadosMes[estadoApp.mesAtual] || {};
@@ -2002,7 +2240,7 @@ function abrirRelatorioMensal() {
  <td class="py-1.5 font-medium text-slate-200">${a.estabelecimento}</td>
  <td class="py-1.5 text-slate-400">${a.categoria || 'Outros'}</td>
  <td class="py-1.5 text-slate-300">${formatarDataBR(a.data)}</td>
- <td class="py-1.5">${a.ehAssinatura ? '<span class="text-indigo-400 font-semibold">Assinatura</span>' : '<span class="text-slate-400">À Vista</span>'}</td>
+ <td class="py-1.5">${a.ehAssinatura ? '<span class="text-indigo-400 font-semibold">Assinatura</span>' : (a.ehRotativo ? '<span class="text-amber-400 font-semibold">Rotativo</span>' : '<span class="text-slate-400">À Vista</span>')}</td>
  <td class="py-1.5 text-right font-bold text-rose-400">${formatarMoeda(a.valor)}</td>
  </tr>
  `).join('')}
@@ -2146,7 +2384,7 @@ function abrirRelatorioMensal() {
  labels: labels,
  datasets: [{
  data: data,
- backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#64748b']
+ backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#64748b', '#06b6d4', '#f97316', '#a855f7', '#84cc16']
  }]
  },
  options: {
@@ -2178,6 +2416,7 @@ function exportarRelatorioPDF() {
  if (btnPDF) btnPDF.style.display = 'flex';
  });
 }
+
 /* SISTEMA DE BACKUP E RESTAURAÇÃO (LOCAL + GOOGLE DRIVE INDIVIDUAL) */
 function abrirBackupModal() {
  const urlAtual = obterUrlDriveUsuario();
@@ -2258,6 +2497,7 @@ function importarBackupLocal() {
  const dadosImportados = JSON.parse(e.target.result);
  if (dadosImportados && dadosImportados.dadosMes) {
  estadoApp = dadosImportados;
+ sanitizarEstado();
  salvarStorage();
  fecharModal();
  alert("Backup restaurado com sucesso!");
@@ -2286,8 +2526,6 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('authContainer').classList.remove('hidden');
  }
  } else {
- document.getElementById('authContainer').classList.add('hidden');
- // Exibe tela de login
  document.getElementById('authContainer').classList.remove('hidden');
  }
 });
