@@ -346,6 +346,7 @@ function criarEstadoVazio() {
  diaFechamentoCartao: 25,
  abaAtiva: 'fixas',
  subAbaCartao: 'avista',
+ _editandoFatura: false,
  dadosMes: {}
  };
 }
@@ -481,6 +482,7 @@ function sanitizarEstado() {
  if (typeof estadoApp.diaFechamentoCartao !== 'number') estadoApp.diaFechamentoCartao = 25;
  if (!estadoApp.abaAtiva) estadoApp.abaAtiva = 'fixas';
  if (!estadoApp.subAbaCartao) estadoApp.subAbaCartao = 'avista';
+ if (typeof estadoApp._editandoFatura !== 'boolean') estadoApp._editandoFatura = false;
  if (!estadoApp.dadosMes || typeof estadoApp.dadosMes !== 'object') estadoApp.dadosMes = {};
  Object.keys(estadoApp.dadosMes).forEach(mesKey => {
  const d = estadoApp.dadosMes[mesKey];
@@ -693,6 +695,7 @@ function mudarMes(direcao) {
  let novoAno = d.getFullYear();
  let novoMes = String(d.getMonth() + 1).padStart(2, '0');
  estadoApp.mesAtual = `${novoAno}-${novoMes}`;
+ estadoApp._editandoFatura = false;
  garantirEstruturaMes(estadoApp.mesAtual);
  salvarStorage();
  atualizarInterface();
@@ -745,6 +748,7 @@ function renderizarModalSeletorMes() {
 }
 function selecionarMesDireto(ano, mes) {
  estadoApp.mesAtual = `${ano}-${mes}`;
+ estadoApp._editandoFatura = false;
  garantirEstruturaMes(estadoApp.mesAtual);
  salvarStorage();
  atualizarInterface();
@@ -987,7 +991,7 @@ function gerarSelectCategoria(idSelect, valorSelecionado = 'Outros') {
  `;
 }
 
-/* MELHORIA 3: BAIXA AUTOMÁTICA NO SALDO DA CONTA BANCÁRIA AO PAGAR DÍVIDAS */
+/* BAIXA AUTOMÁTICA NO SALDO DA CONTA BANCÁRIA AO PAGAR DÍVIDAS */
 function toggleStatusPago(tipo, id) {
  const dados = estadoApp.dadosMes[estadoApp.mesAtual];
  if (dados && dados[tipo]) {
@@ -999,10 +1003,8 @@ function toggleStatusPago(tipo, id) {
  if (!item.dataPagamento) {
  item.dataPagamento = new Date().toISOString().split('T')[0];
  }
- // Desconta automaticamente da Conta Bancária
  estadoApp.contaBancaria -= valor;
  } else {
- // Devolve o valor à Conta Bancária ao desmarcar
  estadoApp.contaBancaria += valor;
  }
  salvarStorage();
@@ -1570,7 +1572,7 @@ function renderizarAbaAtiva() {
  }
  corpoSubHtml += `</div>`;
  } else if (sub === 'fatura') {
- /* MELHORIA 4: GESTÃO AVANÇADA DE ROTATIVO / PAGAMENTO PARCIAL (BANCO DO BRASIL) */
+ /* NOVO FORMATO: REGISTRO FORMAL DO PAGAMENTO COM CANETINHA E LIXEIRINHA */
  let totalParcelado = (dados.parcelado || []).reduce((acc, i) => acc + Number(i.valorParcela || 0), 0);
  let totalAvista = (dados.avista || []).reduce((acc, i) => acc + Number(i.valor || 0), 0);
  let totalFatura = totalParcelado + totalAvista;
@@ -1578,14 +1580,90 @@ function renderizarAbaAtiva() {
  let dataPag = dados.pagamentoFatura ? dados.pagamentoFatura.dataPagamento || '' : '';
  let jurosPerc = dados.pagamentoFatura ? Number(dados.pagamentoFatura.jurosPercentual || 0) : 0;
  let encargosFix = dados.pagamentoFatura ? Number(dados.pagamentoFatura.encargosFixos || 0) : 0;
+ let rotativoTransf = dados.pagamentoFatura ? Number(dados.pagamentoFatura.rotativoTransferido || 0) : 0;
  let saldoDevedor = Math.max(0, totalFatura - pago);
- let valorJurosRotativo = (saldoDevedor * (jurosPerc / 100));
- let encargosTotaisRotativo = valorJurosRotativo + encargosFix;
- let saldoProximaFatura = saldoDevedor + encargosTotaisRotativo;
 
+ const temPagamentoRegistrado = (pago > 0 || dataPag !== '') && !estadoApp._editandoFatura;
+
+ if (temPagamentoRegistrado) {
+ const ehTotal = saldoDevedor === 0;
  corpoSubHtml = `
  <div class="space-y-4">
  <h4 class="font-bold text-sm text-slate-200">Pagamento Consolidado da Fatura</h4>
+ 
+ <!-- Resumo de Dívidas da Fatura -->
+ <div class="bg-slate-800/60 p-3 rounded-xl space-y-1.5 text-xs border border-slate-700/50">
+ <div class="flex justify-between"><span class="text-slate-400">Total Parcelado:</span><span class="font-bold">${formatarMoeda(totalParcelado)}</span></div>
+ <div class="flex justify-between"><span class="text-slate-400">Total À Vista & Assinaturas:</span><span class="font-bold">${formatarMoeda(totalAvista)}</span></div>
+ <div class="border-t border-slate-700 pt-1.5 flex justify-between text-emerald-400 font-bold"><span>Valor Total da Fatura:</span><span>${formatarMoeda(totalFatura)}</span></div> 
+ </div>
+
+ <!-- REGISTRO FORMAL LIMPO DE PAGAMENTO -->
+ <div class="bg-slate-800/80 p-4 rounded-xl border ${ehTotal ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-amber-500/40 bg-amber-950/10'} shadow-lg space-y-3">
+ <div class="flex items-center justify-between border-b border-slate-700/80 pb-2.5">
+ <div class="flex items-center space-x-2">
+ <div class="w-8 h-8 rounded-lg ${ehTotal ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'} flex items-center justify-center text-sm">
+ <i class="fa-solid ${ehTotal ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i>
+ </div>
+ <div>
+ <h5 class="text-xs font-bold ${ehTotal ? 'text-emerald-400' : 'text-amber-400'} uppercase tracking-wide">
+ ${ehTotal ? 'Pagamento Integral Efetuado' : 'Pagamento Parcial Registrado'}
+ </h5>
+ <p class="text-[10px] text-slate-400">Data do Pagamento: <strong class="text-slate-200">${formatarDataBR(dataPag) || 'Não informada'}</strong></p>
+ </div>
+ </div>
+ 
+ <!-- BOTÕES DE AÇÃO (EDITAR E EXCLUIR) -->
+ <div class="flex items-center space-x-1">
+ <button type="button" onclick="habilitarEdicaoFatura()" title="Editar Pagamento" class="p-2 text-slate-400 hover:text-emerald-400 bg-slate-900/60 rounded-lg border border-slate-700 hover:border-emerald-500/50 transition active:scale-95">
+ <i class="fa-regular fa-pen-to-square text-xs"></i>
+ </button>
+ <button type="button" onclick="confirmarExclusaoPagamentoFatura()" title="Excluir Pagamento" class="p-2 text-slate-400 hover:text-rose-400 bg-slate-900/60 rounded-lg border border-slate-700 hover:border-rose-500/50 transition active:scale-95">
+ <i class="fa-solid fa-trash-can text-xs"></i>
+ </button>
+ </div>
+ </div>
+
+ <!-- Detalhes do Pagamento -->
+ <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+ <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+ <span class="text-[10px] text-slate-400 block font-semibold uppercase">Valor Pago</span>
+ <span class="font-black text-emerald-400 text-sm">${formatarMoeda(pago)}</span>
+ </div>
+ <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+ <span class="text-[10px] text-slate-400 block font-semibold uppercase">Saldo Devedor</span>
+ <span class="font-black ${saldoDevedor > 0 ? 'text-rose-400' : 'text-emerald-400'} text-sm">${formatarMoeda(saldoDevedor)}</span>
+ </div>
+ </div>
+
+ ${saldoDevedor > 0 ? `
+ <div class="bg-amber-950/30 border border-amber-500/30 p-2.5 rounded-lg text-[11px] space-y-1">
+ <div class="flex justify-between text-slate-300">
+ <span>Encargos BB (${jurosPerc}% Juros + Tarifa):</span>
+ <span class="font-bold text-amber-400">${formatarMoeda(rotativoTransf - saldoDevedor)}</span>
+ </div>
+ <div class="flex justify-between text-slate-100 font-bold border-t border-slate-800 pt-1">
+ <span>Transferido para o próximo mês:</span>
+ <span class="text-indigo-400">${formatarMoeda(rotativoTransf)}</span>
+ </div>
+ </div>
+ ` : ''}
+ </div>
+ </div>
+ `;
+ } else {
+ // FORMULÁRIO DE PREENCHIMENTO DE PAGAMENTO (NOVO OU EDIÇÃO)
+ corpoSubHtml = `
+ <div class="space-y-4">
+ <div class="flex items-center justify-between">
+ <h4 class="font-bold text-sm text-slate-200">
+ ${estadoApp._editandoFatura ? 'Editar Pagamento da Fatura' : 'Registrar Pagamento da Fatura'}
+ </h4>
+ ${estadoApp._editandoFatura ? `
+ <button type="button" onclick="cancelarEdicaoFatura()" class="text-[11px] text-slate-400 hover:text-slate-200 underline">Cancelar Edição</button>
+ ` : ''}
+ </div>
+
  <div class="bg-slate-800/60 p-3 rounded-xl space-y-1.5 text-xs border border-slate-700/50">
  <div class="flex justify-between"><span class="text-slate-400">Total Parcelado:</span><span class="font-bold">${formatarMoeda(totalParcelado)}</span></div>
  <div class="flex justify-between"><span class="text-slate-400">Total À Vista & Assinaturas:</span><span class="font-bold">${formatarMoeda(totalAvista)}</span></div>
@@ -1594,12 +1672,12 @@ function renderizarAbaAtiva() {
 
  <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
  <label class="text-xs text-slate-300 font-medium block">Quanto foi pago desta fatura? (R$)</label>
- <input type="number" step="0.01" id="inputValorPagoFatura" value="${pago}" oninput="atualizarCalculoRotativoLive()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+ <input type="number" step="0.01" id="inputValorPagoFatura" value="${pago > 0 ? pago : totalFatura}" oninput="atualizarCalculoRotativoLive()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
  </div>
 
  <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
  <label class="text-xs text-slate-300 font-medium block">Data do pagamento:</label>
- <input type="date" id="inputDataPagoFatura" value="${dataPag}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+ <input type="date" id="inputDataPagoFatura" value="${dataPag || new Date().toISOString().split('T')[0]}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
  </div>
 
  <!-- PAINEL ROTATIVO BANCO DO BRASIL -->
@@ -1623,14 +1701,17 @@ function renderizarAbaAtiva() {
 
  <div id="painelCalculoRotativoLive" class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1 text-[11px]">
  <div class="flex justify-between"><span class="text-slate-400">Saldo Devedor Restante:</span><span id="dispSaldoDev" class="font-bold text-rose-400">${formatarMoeda(saldoDevedor)}</span></div>
- <div class="flex justify-between"><span class="text-slate-400">Encargos Estimados (Juros+IOF):</span><span id="dispEncargosEst" class="font-bold text-amber-400">${formatarMoeda(encargosTotaisRotativo)}</span></div>
- <div class="flex justify-between border-t border-slate-800 pt-1 font-bold text-slate-100"><span>Transferência p/ Próx. Fatura:</span><span id="dispTotalProx" class="text-indigo-400">${formatarMoeda(saldoProximaFatura)}</span></div>
+ <div class="flex justify-between"><span class="text-slate-400">Encargos Estimados (Juros+IOF):</span><span id="dispEncargosEst" class="font-bold text-amber-400">${formatarMoeda((saldoDevedor * (jurosPerc/100)) + encargosFix)}</span></div>
+ <div class="flex justify-between border-t border-slate-800 pt-1 font-bold text-slate-100"><span>Transferência p/ Próx. Fatura:</span><span id="dispTotalProx" class="text-indigo-400">${formatarMoeda(saldoDevedor + (saldoDevedor * (jurosPerc/100)) + encargosFix)}</span></div>
  </div>
  </div>
 
- <button type="button" onclick="salvarPagamentoFatura(${totalFatura})" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95 shadow-md">Confirmar e Salvar Pagamento da Fatura</button>
+ <button type="button" onclick="salvarPagamentoFatura(${totalFatura})" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition active:scale-95 shadow-md">
+ ${estadoApp._editandoFatura ? 'Salvar Alterações do Pagamento' : 'Confirmar e Salvar Pagamento da Fatura'}
+ </button>
  </div>
  `;
+ }
  }
  let fechamentoHtml = `
  <div class="mt-6 pt-3 border-t border-slate-800">
@@ -1648,6 +1729,62 @@ function renderizarAbaAtiva() {
  `;
  container.innerHTML = subBarHtml + corpoSubHtml + fechamentoHtml;
  }
+}
+
+/* FUNÇÕES DE GESTÃO DO PAGAMENTO DA FATURA (EDITAR E EXCLUIR) */
+function habilitarEdicaoFatura() {
+ estadoApp._editandoFatura = true;
+ renderizarAbaAtiva();
+}
+
+function cancelarEdicaoFatura() {
+ estadoApp._editandoFatura = false;
+ renderizarAbaAtiva();
+}
+
+function confirmarExclusaoPagamentoFatura() {
+ abrirModalGarantido("Excluir Pagamento da Fatura", `
+ <div class="space-y-3">
+ <div class="bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl">
+ <p class="text-xs font-bold text-rose-400">⚠️ Tem certeza que deseja excluir este registro?</p>
+ <p class="text-[11px] text-slate-300 mt-1">O valor pago será estornado para o seu saldo da Conta Bancária e qualquer saldo devedor/rotativo gerado para o próximo mês será cancelado.</p>
+ </div>
+ <div class="flex space-x-2 pt-1">
+ <button type="button" onclick="fecharModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition active:scale-95">Cancelar</button>
+ <button type="button" onclick="excluirPagamentoFatura()" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 rounded-xl text-xs transition active:scale-95">Sim, Excluir</button>
+ </div>
+ </div>
+ `);
+}
+
+function excluirPagamentoFatura() {
+ const dados = estadoApp.dadosMes[estadoApp.mesAtual];
+ if (!dados || !dados.pagamentoFatura) return;
+
+ const pago = Number(dados.pagamentoFatura.valorPago || 0);
+ 
+ // Estorna o valor pago de volta para a conta bancária
+ estadoApp.contaBancaria += pago;
+
+ // Reseta os dados do pagamento da fatura
+ dados.pagamentoFatura = {
+ valorPago: 0,
+ dataPagamento: '',
+ jurosPercentual: 0,
+ encargosFixos: 0,
+ rotativoTransferido: 0
+ };
+
+ // Remove a transferência de rotativo do próximo mês se existir
+ const proximoMesKey = somarMesesKey(estadoApp.mesAtual, 1);
+ if (estadoApp.dadosMes[proximoMesKey] && Array.isArray(estadoApp.dadosMes[proximoMesKey].avista)) {
+ estadoApp.dadosMes[proximoMesKey].avista = estadoApp.dadosMes[proximoMesKey].avista.filter(i => i.idRotativoOrigem !== estadoApp.mesAtual);
+ }
+
+ estadoApp._editandoFatura = false;
+ salvarStorage();
+ fecharModal();
+ atualizarInterface();
 }
 
 /* CÁLCULO AO VIVO DOS ENCARGOS DO ROTATIVO */
@@ -1759,7 +1896,7 @@ function abrirSubMenuCartao() {
  `);
 }
 
-/* MELHORIA 1: DETECÇÃO INTELIGENTE DE DUPLICIDADE */
+/* DETECÇÃO INTELIGENTE DE DUPLICIDADE */
 function verificarDuplicidade(tipo, dadosItem) {
  const mesDados = estadoApp.dadosMes[estadoApp.mesAtual];
  if (!mesDados) return null;
@@ -1872,7 +2009,6 @@ function salvarNovoItem(tipo, forcar = false) {
  dadosItemTemp.valorParcela = parseFloat(document.getElementById('addVal')?.value) || 0;
  }
 
- // VERIFICAÇÃO INTELIGENTE DE DUPLICIDADE (MENSAGEM DE ALERTA SEM TRAVAMENTO)
  if (!forcar) {
  const duplicado = verificarDuplicidade(tipo, dadosItemTemp);
  if (duplicado) {
@@ -2029,7 +2165,7 @@ function salvarNovoItem(tipo, forcar = false) {
  atualizarInterface();
 }
 
-/* MELHORIA 4: SALVAR PAGAMENTO DA FATURA COM ROTATIVO E BAIXA NA CONTA BANCÁRIA */
+/* SALVAR PAGAMENTO DA FATURA COM ROTATIVO E BAIXA NA CONTA BANCÁRIA */
 function salvarPagamentoFatura(totalFaturaCalculada) {
  const dados = estadoApp.dadosMes[estadoApp.mesAtual];
  if (!dados) return;
@@ -2039,17 +2175,17 @@ function salvarPagamentoFatura(totalFaturaCalculada) {
  let totalFatura = totalFaturaCalculada || (totalParcelado + totalAvista);
 
  const valNovo = parseFloat(document.getElementById('inputValorPagoFatura').value) || 0;
- const dt = document.getElementById('inputDataPagoFatura').value || '';
+ const dt = document.getElementById('inputDataPagoFatura').value || new Date().toISOString().split('T')[0];
  const jurosPerc = parseFloat(document.getElementById('inputJurosRotativo')?.value) || 0;
  const encargosFix = parseFloat(document.getElementById('inputEncargosFixos')?.value) || 0;
 
  const pagoAntigo = Number(dados.pagamentoFatura ? dados.pagamentoFatura.valorPago : 0);
  const diff = valNovo - pagoAntigo;
 
- // Baixa / Ajuste automático na conta bancária (Melhoria 3)
+ // Ajusta saldo em conta bancária
  estadoApp.contaBancaria -= diff;
 
- // Saldo devedor e encargos do rotativo (Melhoria 4)
+ // Saldo devedor e encargos do rotativo
  const saldoDevedor = Math.max(0, totalFatura - valNovo);
  const jurosVal = (saldoDevedor * (jurosPerc / 100));
  const encargosTotais = jurosVal + encargosFix;
@@ -2070,7 +2206,7 @@ function salvarPagamentoFatura(totalFaturaCalculada) {
  // Limpa rotativo anterior vindo deste mês se já houver
  estadoApp.dadosMes[proximoMesKey].avista = (estadoApp.dadosMes[proximoMesKey].avista || []).filter(i => i.idRotativoOrigem !== estadoApp.mesAtual);
 
- if (saldoDevedor > 0) {
+ if (saldoDevedor > 0 && valNovo > 0) {
  estadoApp.dadosMes[proximoMesKey].avista.push({
  id: Date.now(),
  idRotativoOrigem: estadoApp.mesAtual,
@@ -2083,12 +2219,13 @@ function salvarPagamentoFatura(totalFaturaCalculada) {
  });
  }
 
+ estadoApp._editandoFatura = false;
  salvarStorage();
  atualizarInterface();
  if (saldoDevedor > 0) {
  alert(`Pagamento de ${formatarMoeda(valNovo)} registrado!\n- Descontado do saldo em conta.\n- ${formatarMoeda(totalRotativoTransferir)} (Saldo + Encargos BB) transferido para a fatura de ${proximoMesKey}.`);
  } else {
- alert('Pagamento integral da fatura atualizado com sucesso e descontado da Conta Bancária!');
+ alert('Pagamento integral da fatura registrado com sucesso!');
  }
 }
 
